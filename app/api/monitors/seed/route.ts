@@ -204,9 +204,12 @@ const gamestopUrls: MonitorSeed[] = [
 
 // ============================================================================
 // BEST BUY - VERIFIED REAL URLs
+// Source: bestbuy.com search results
 // ============================================================================
 const bestbuyUrls: MonitorSeed[] = [
-  { url: "https://www.bestbuy.com/site/pokemon-trading-card-game-scarlet-violet-prismatic-evolutions-elite-trainer-box/6612553.p", retailer: "BEST_BUY", name: "Pokemon TCG Scarlet & Violet Prismatic Evolutions Elite Trainer Box" },
+  { url: "https://www.bestbuy.com/site/pokemon-trading-card-game-scarlet-violet-prismatic-evolutions-elite-trainer-box/6606082.p", retailer: "BEST_BUY", name: "Pokemon TCG Scarlet & Violet Prismatic Evolutions Elite Trainer Box" },
+  { url: "https://www.bestbuy.com/site/pokemon-trading-card-game-scarlet-violet-prismatic-evolutions-booster-bundle/6606083.p", retailer: "BEST_BUY", name: "Pokemon TCG Scarlet & Violet Prismatic Evolutions Booster Bundle" },
+  { url: "https://www.bestbuy.com/site/pokemon-trading-card-game-scarlet-violet-prismatic-evolutions-surprise-box/10890190.p", retailer: "BEST_BUY", name: "Pokemon TCG Scarlet & Violet Prismatic Evolutions Surprise Box" },
 ];
 
 // ============================================================================
