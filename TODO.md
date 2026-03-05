@@ -53,7 +53,7 @@
 - [x] URL monitor management (/admin/monitors)
 - [x] Calendar drop detail modal
 - [x] Admin delete buttons
-- [~] Bulk import monitor URLs from retailers (THOUSANDS of products)
+- [x] Bulk import monitor URLs from retailers (75+ initial URLs with import button)
 - [ ] External cron service for Hobby plan (or upgrade to Pro)
 
 ## Notes / Decisions Log

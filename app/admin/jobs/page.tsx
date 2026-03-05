@@ -64,7 +64,7 @@ export default function JobsPage() {
       case "success":
         return <Badge variant="success">Success</Badge>;
       case "error":
-        return <Badge variant="destructive">Error</Badge>;
+        return <Badge variant="danger">Error</Badge>;
       case "partial":
         return <Badge variant="warning">Partial</Badge>;
       default:

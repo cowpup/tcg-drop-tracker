@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { Card, Button, Badge, LoadingSpinner } from "@/components/ui";
 import { Retailer, RetailerLabels } from "@/types";
-import { ArrowLeft, Save, Check, Trash2, ExternalLink } from "lucide-react";
+import { ArrowLeft, Save, Check, Trash2, ExternalLink, Download, RefreshCw } from "lucide-react";
 import Link from "next/link";
 
 const ADMIN_USER_IDS = process.env.NEXT_PUBLIC_ADMIN_USER_IDS?.split(",") || [];
@@ -37,6 +37,13 @@ export default function MonitorsPage() {
     retailer: "" as Retailer | "",
     productId: "",
   });
+
+  const [seeding, setSeeding] = useState(false);
+  const [seedResult, setSeedResult] = useState<{
+    created: number;
+    skipped: number;
+    total: number;
+  } | null>(null);
 
   const isAdmin = userId && ADMIN_USER_IDS.includes(userId);
 
@@ -104,6 +111,42 @@ export default function MonitorsPage() {
     }
   };
 
+  const bulkSeedMonitors = async () => {
+    if (!confirm("Bulk import 75+ retailer monitor URLs from Pokemon Center, Target, Walmart, GameStop, Best Buy, Amazon, and TCGPlayer?")) {
+      return;
+    }
+
+    setSeeding(true);
+    setSeedResult(null);
+
+    try {
+      const res = await fetch("/api/monitors/seed", {
+        method: "POST",
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Seed failed");
+      }
+
+      setSeedResult({
+        created: data.created,
+        skipped: data.skipped,
+        total: data.total,
+      });
+
+      // Refresh monitor list
+      const monitorsRes = await fetch("/api/monitors");
+      const monitorsData = await monitorsRes.json();
+      setMonitors(Array.isArray(monitorsData) ? monitorsData : []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Bulk seed failed");
+    } finally {
+      setSeeding(false);
+    }
+  };
+
   if (!isAdmin) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
@@ -129,6 +172,42 @@ export default function MonitorsPage() {
           </p>
         </div>
       </div>
+
+      {/* Bulk Import */}
+      <Card>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+              Bulk Import
+            </h2>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              Import 75+ pre-configured monitor URLs from major retailers
+            </p>
+            {seedResult && (
+              <p className="mt-2 text-sm text-green-600 dark:text-green-400">
+                Created {seedResult.created} monitors, skipped {seedResult.skipped} existing. Total: {seedResult.total}
+              </p>
+            )}
+          </div>
+          <Button
+            variant="outline"
+            onClick={bulkSeedMonitors}
+            loading={seeding}
+          >
+            {seeding ? (
+              <>
+                <RefreshCw className="h-4 w-4 animate-spin" />
+                Importing...
+              </>
+            ) : (
+              <>
+                <Download className="h-4 w-4" />
+                Import Monitors
+              </>
+            )}
+          </Button>
+        </div>
+      </Card>
 
       {/* Add Monitor Form */}
       <Card>
