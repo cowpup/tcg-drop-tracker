@@ -152,6 +152,23 @@ export async function POST(request: NextRequest) {
 
     const duration = Date.now() - startTime;
 
+    // Log job result to database
+    await prisma.jobLog.create({
+      data: {
+        jobType: "scrape-security",
+        status: results.errors.length > 0 ? "partial" : "success",
+        duration,
+        itemsChecked: results.monitorsChecked,
+        itemsFound: results.securitySignals + results.queueSignals,
+        errors: results.errors,
+        metadata: {
+          securitySignals: results.securitySignals,
+          queueSignals: results.queueSignals,
+          notificationsSent: results.notificationsSent,
+        },
+      },
+    });
+
     console.log("Security scrape completed", {
       duration: `${duration}ms`,
       ...results,

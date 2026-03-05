@@ -248,6 +248,12 @@ export default function AdminPage() {
               Manage Monitors
             </Button>
           </Link>
+          <Link href="/admin/jobs">
+            <Button variant="outline" className="w-full justify-start">
+              <RefreshCw className="h-4 w-4" />
+              Job Logs
+            </Button>
+          </Link>
         </div>
       </Card>
 

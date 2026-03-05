@@ -141,6 +141,22 @@ model DiscordWebhook {
   @@index([active])
 }
 
+// Job logs for cron monitoring
+model JobLog {
+  id            String    @id @default(cuid())
+  jobType       String    // "scrape-security", "scrape-inventory"
+  status        String    // "success", "error", "partial"
+  duration      Int       // milliseconds
+  itemsChecked  Int       @default(0)
+  itemsFound    Int       @default(0)
+  errors        String[]
+  metadata      Json?
+  createdAt     DateTime  @default(now())
+
+  @@index([jobType])
+  @@index([createdAt])
+}
+
 // Enums
 enum Game {
   POKEMON

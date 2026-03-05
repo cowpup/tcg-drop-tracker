@@ -79,6 +79,23 @@ export async function POST(request: NextRequest) {
 
     const duration = Date.now() - startTime;
 
+    // Log job result to database
+    await prisma.jobLog.create({
+      data: {
+        jobType: "scrape-inventory",
+        status: results.errors.length > 0 ? "partial" : "success",
+        duration,
+        itemsChecked: results.monitorsChecked,
+        itemsFound: results.restockSignals + results.priceChangeSignals,
+        errors: results.errors,
+        metadata: {
+          restockSignals: results.restockSignals,
+          priceChangeSignals: results.priceChangeSignals,
+          notificationsSent: results.notificationsSent,
+        },
+      },
+    });
+
     console.log("Inventory scrape completed", {
       duration: `${duration}ms`,
       ...results,
