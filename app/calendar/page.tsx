@@ -30,7 +30,7 @@ interface Drop {
   retailer: string;
   dropType: string;
   status: string;
-  scheduledAt: string | null;
+  scheduledAt: Date | string | null;
   url: string | null;
   price: number | null;
   notes: string | null;
