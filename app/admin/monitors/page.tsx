@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { Card, Button, Badge, LoadingSpinner } from "@/components/ui";
 import { Retailer, RetailerLabels } from "@/types";
-import { ArrowLeft, Save, Check, Trash2, ExternalLink, Download, RefreshCw, Search } from "lucide-react";
+import { ArrowLeft, Save, Check, Trash2, ExternalLink, Download, RefreshCw, Search, Tag } from "lucide-react";
 import Link from "next/link";
 
 const ADMIN_USER_IDS = process.env.NEXT_PUBLIC_ADMIN_USER_IDS?.split(",") || [];
@@ -51,6 +51,7 @@ export default function MonitorsPage() {
     discovered: number;
     newMonitors: number;
   } | null>(null);
+  const [refreshingNames, setRefreshingNames] = useState(false);
 
   const isAdmin = userId && ADMIN_USER_IDS.includes(userId);
 
@@ -217,6 +218,32 @@ export default function MonitorsPage() {
     }
   };
 
+  const refreshNames = async () => {
+    setRefreshingNames(true);
+    setError(null);
+
+    try {
+      const res = await fetch("/api/monitors/refresh-names", {
+        method: "POST",
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Refresh failed");
+      }
+
+      // Refresh monitor list to show new names
+      const monitorsRes = await fetch("/api/monitors");
+      const monitorsData = await monitorsRes.json();
+      setMonitors(Array.isArray(monitorsData) ? monitorsData : []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to refresh names");
+    } finally {
+      setRefreshingNames(false);
+    }
+  };
+
   if (!isAdmin) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
@@ -259,7 +286,7 @@ export default function MonitorsPage() {
               </p>
             )}
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button
               variant="outline"
               onClick={clearAllMonitors}
@@ -275,6 +302,23 @@ export default function MonitorsPage() {
                 <>
                   <Trash2 className="h-4 w-4" />
                   Clear All
+                </>
+              )}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={refreshNames}
+              loading={refreshingNames}
+            >
+              {refreshingNames ? (
+                <>
+                  <RefreshCw className="h-4 w-4 animate-spin" />
+                  Refreshing...
+                </>
+              ) : (
+                <>
+                  <Tag className="h-4 w-4" />
+                  Fix Names
                 </>
               )}
             </Button>

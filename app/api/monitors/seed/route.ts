@@ -99,30 +99,34 @@ const walmartUrls: MonitorSeed[] = [
 ];
 
 // ============================================================================
-// AMAZON - VERIFIED REAL URLs (with real ASINs)
+// AMAZON - VERIFIED REAL URLs (with real ASINs and product names)
 // ============================================================================
-const amazonUrls: MonitorSeed[] = [
+interface AmazonProduct extends MonitorSeed {
+  name: string;
+}
+
+const amazonUrls: AmazonProduct[] = [
   // POKEMON TCG - SCARLET & VIOLET BASE
-  { url: "https://www.amazon.com/dp/B0BSNXK3H7", retailer: "AMAZON" }, // SV ETB Random Color
-  { url: "https://www.amazon.com/dp/B0BTJ9VYC6", retailer: "AMAZON" }, // SV ETB Miraidon Purple
-  { url: "https://www.amazon.com/dp/B0BTJ9SHRY", retailer: "AMAZON" }, // SV ETB Koraidon Red
-  { url: "https://www.amazon.com/dp/B0BZQTDQ93", retailer: "AMAZON" }, // SV ETB Miraidon
-  { url: "https://www.amazon.com/dp/B0C1LDKZS8", retailer: "AMAZON" }, // SV Pokemon Center ETB Koraidon
+  { url: "https://www.amazon.com/dp/B0BSNXK3H7", retailer: "AMAZON", name: "Pokemon TCG Scarlet & Violet Elite Trainer Box (Random Color)" },
+  { url: "https://www.amazon.com/dp/B0BTJ9VYC6", retailer: "AMAZON", name: "Pokemon TCG Scarlet & Violet Elite Trainer Box - Miraidon Purple" },
+  { url: "https://www.amazon.com/dp/B0BTJ9SHRY", retailer: "AMAZON", name: "Pokemon TCG Scarlet & Violet Elite Trainer Box - Koraidon Red" },
+  { url: "https://www.amazon.com/dp/B0BZQTDQ93", retailer: "AMAZON", name: "Pokemon TCG Scarlet & Violet Elite Trainer Box - Miraidon" },
+  { url: "https://www.amazon.com/dp/B0C1LDKZS8", retailer: "AMAZON", name: "Pokemon TCG Scarlet & Violet Pokemon Center Elite Trainer Box (Koraidon)" },
 
   // POKEMON TCG - PRISMATIC EVOLUTIONS
-  { url: "https://www.amazon.com/dp/B0DLPL7LC5", retailer: "AMAZON" }, // Prismatic Evolutions ETB
+  { url: "https://www.amazon.com/dp/B0DLPL7LC5", retailer: "AMAZON", name: "Pokemon TCG Scarlet & Violet Prismatic Evolutions Elite Trainer Box" },
 
   // POKEMON TCG - JOURNEY TOGETHER
-  { url: "https://www.amazon.com/dp/B0DSLY7DZZ", retailer: "AMAZON" }, // Journey Together ETB
+  { url: "https://www.amazon.com/dp/B0DSLY7DZZ", retailer: "AMAZON", name: "Pokemon TCG Scarlet & Violet Journey Together Elite Trainer Box" },
 
   // POKEMON TCG - WHITE FLARE
-  { url: "https://www.amazon.com/dp/B0F6Q92F5H", retailer: "AMAZON" }, // White Flare ETB
+  { url: "https://www.amazon.com/dp/B0F6Q92F5H", retailer: "AMAZON", name: "Pokemon TCG Scarlet & Violet White Flare Elite Trainer Box" },
 
   // POKEMON TCG - DESTINED RIVALS
-  { url: "https://www.amazon.com/dp/B0F2BDXW4J", retailer: "AMAZON" }, // Destined Rivals ETB
+  { url: "https://www.amazon.com/dp/B0F2BDXW4J", retailer: "AMAZON", name: "Pokemon TCG Scarlet & Violet Destined Rivals Elite Trainer Box" },
 
   // POKEMON TCG - SHROUDED FABLE
-  { url: "https://www.amazon.com/dp/B0D4B4SL9X", retailer: "AMAZON" }, // Shrouded Fable ETB
+  { url: "https://www.amazon.com/dp/B0D4B4SL9X", retailer: "AMAZON", name: "Pokemon TCG Scarlet & Violet Shrouded Fable Elite Trainer Box" },
 ];
 
 // ============================================================================
@@ -178,11 +182,14 @@ export async function POST() {
           continue;
         }
 
+        // Use explicit name if provided (for Amazon), otherwise extract from URL
+        const name = (monitor as AmazonProduct).name || extractNameFromUrl(monitor.url, monitor.retailer);
+
         await prisma.retailerMonitor.create({
           data: {
             url: monitor.url,
             retailer: monitor.retailer,
-            name: extractNameFromUrl(monitor.url, monitor.retailer),
+            name,
           },
         });
         created++;
