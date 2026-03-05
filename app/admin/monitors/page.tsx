@@ -13,7 +13,6 @@ interface Monitor {
   id: string;
   url: string;
   retailer: string;
-  name: string | null;
   lastCheckedAt: string | null;
   lastStatus: number | null;
   product: { id: string; name: string } | null;
@@ -37,7 +36,6 @@ export default function MonitorsPage() {
     url: "",
     retailer: "" as Retailer | "",
     productId: "",
-    name: "",
   });
 
   const isAdmin = userId && ADMIN_USER_IDS.includes(userId);
@@ -84,7 +82,7 @@ export default function MonitorsPage() {
 
       setMonitors([data, ...monitors]);
       setSaved(true);
-      setFormData({ url: "", retailer: "", productId: "", name: "" });
+      setFormData({ url: "", retailer: "", productId: "" });
       setTimeout(() => setSaved(false), 3000);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create monitor");
@@ -152,7 +150,7 @@ export default function MonitorsPage() {
             />
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Retailer *
@@ -188,19 +186,6 @@ export default function MonitorsPage() {
                   </option>
                 ))}
               </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Label (optional)
-              </label>
-              <input
-                type="text"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="e.g., Pokemon Center ETB"
-                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-              />
             </div>
           </div>
 
@@ -245,9 +230,9 @@ export default function MonitorsPage() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <Badge variant="default">{monitor.retailer}</Badge>
-                    {monitor.name && (
+                    {monitor.product && (
                       <span className="text-sm font-medium text-gray-900 dark:text-white">
-                        {monitor.name}
+                        {monitor.product.name}
                       </span>
                     )}
                   </div>
@@ -255,9 +240,6 @@ export default function MonitorsPage() {
                     {monitor.url}
                   </p>
                   <div className="mt-1 flex items-center gap-3 text-xs text-gray-400">
-                    {monitor.product && (
-                      <span>Product: {monitor.product.name}</span>
-                    )}
                     {monitor.lastCheckedAt && (
                       <span>
                         Last checked: {new Date(monitor.lastCheckedAt).toLocaleString()}

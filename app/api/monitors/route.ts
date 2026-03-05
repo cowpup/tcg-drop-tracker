@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { url, retailer, productId, name } = body;
+    const { url, retailer, productId } = body;
 
     if (!url || !retailer) {
       return NextResponse.json(
@@ -55,7 +55,6 @@ export async function POST(request: NextRequest) {
         url,
         retailer,
         productId: productId || null,
-        name: name || null,
       },
       include: { product: true },
     });
