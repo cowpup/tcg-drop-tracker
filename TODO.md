@@ -45,6 +45,17 @@
 - [x] OG image generation for drops
 - [x] Mobile responsiveness audit
 
+## Phase 6 — Production Ready
+- [x] Deploy to Vercel (https://tcg-drop-tracker.vercel.app/)
+- [x] Neon database connected
+- [x] Clerk auth working
+- [x] Job logging (JobLog model, /admin/jobs)
+- [x] URL monitor management (/admin/monitors)
+- [x] Calendar drop detail modal
+- [x] Admin delete buttons
+- [~] Bulk import monitor URLs from retailers (THOUSANDS of products)
+- [ ] External cron service for Hobby plan (or upgrade to Pro)
+
 ## Notes / Decisions Log
 - 2026-03-05: ALWAYS use Lucide icons, NEVER use emojis in production code
 - 2026-03-05: Using Prisma 7 which moves datasource URL to prisma.config.ts instead of schema.prisma
@@ -56,3 +67,8 @@
 - 2026-03-05: Phases 1-4 complete - Core application functionality built
 - 2026-03-05: Phase 5 complete - Geocoding, admin panel, SEO, OG images, mobile responsiveness all implemented
 - 2026-03-05: BUILD VERIFIED - All 24 routes compiled successfully with Next.js 16.1.6 + Turbopack
+- 2026-03-05: DEPLOYED to Vercel - https://tcg-drop-tracker.vercel.app/
+- 2026-03-05: Clerk updated to use `<Show>` component and `proxy.ts` instead of middleware
+- 2026-03-05: Neon database connected (ep-cool-pine-ai0tvdkb-pooler)
+- 2026-03-05: Added JobLog model for cron monitoring
+- 2026-03-05: Vercel cron jobs require Pro plan ($20/mo) for automatic execution
