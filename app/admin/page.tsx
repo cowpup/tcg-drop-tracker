@@ -215,6 +215,12 @@ export default function AdminPage() {
               Add Trade Show
             </Button>
           </Link>
+          <Link href="/admin/monitors">
+            <Button variant="outline" className="w-full justify-start">
+              <Radio className="h-4 w-4" />
+              Manage Monitors
+            </Button>
+          </Link>
         </div>
       </Card>
 

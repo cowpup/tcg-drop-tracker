@@ -10,19 +10,16 @@ const BATCH_SIZE = 10; // Process monitors in batches to stay within timeout
 // POST /api/cron/scrape-security - Security monitoring cron job
 export async function POST(request: NextRequest) {
   try {
-    // Validate CRON_SECRET
-    const authHeader = request.headers.get("authorization");
+    // Validate cron request - check Vercel cron header or Bearer token
     const cronSecret = process.env.CRON_SECRET;
+    const authHeader = request.headers.get("authorization");
+    const vercelCronHeader = request.headers.get("x-vercel-cron");
 
-    if (!cronSecret) {
-      console.error("CRON_SECRET not configured");
-      return NextResponse.json(
-        { error: "Server configuration error" },
-        { status: 500 }
-      );
-    }
+    // Allow if: Vercel cron header matches, OR Bearer token matches
+    const isVercelCron = vercelCronHeader === cronSecret;
+    const isBearerAuth = authHeader === `Bearer ${cronSecret}`;
 
-    if (authHeader !== `Bearer ${cronSecret}`) {
+    if (!isVercelCron && !isBearerAuth) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
