@@ -1,0 +1,107 @@
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/db";
+import { sendSignalAlert } from "@/lib/discord";
+
+const BATCH_SIZE = 10;
+
+// POST /api/cron/scrape-inventory - Inventory scraping cron job
+export async function POST(request: NextRequest) {
+  try {
+    // Validate CRON_SECRET
+    const authHeader = request.headers.get("authorization");
+    const cronSecret = process.env.CRON_SECRET;
+
+    if (!cronSecret) {
+      console.error("CRON_SECRET not configured");
+      return NextResponse.json(
+        { error: "Server configuration error" },
+        { status: 500 }
+      );
+    }
+
+    if (authHeader !== `Bearer ${cronSecret}`) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const startTime = Date.now();
+    const results = {
+      monitorsChecked: 0,
+      restockSignals: 0,
+      priceChangeSignals: 0,
+      notificationsSent: 0,
+      errors: [] as string[],
+    };
+
+    // Fetch monitors that need inventory checking
+    // For now, this is a placeholder - actual inventory scraping
+    // requires retailer-specific implementations
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+    const monitors = await prisma.retailerMonitor.findMany({
+      where: {
+        OR: [
+          { lastCheckedAt: null },
+          { lastCheckedAt: { lt: fiveMinutesAgo } },
+        ],
+      },
+      take: BATCH_SIZE,
+      orderBy: { lastCheckedAt: "asc" },
+      include: { product: true },
+    });
+
+    results.monitorsChecked = monitors.length;
+
+    // Fetch webhooks for notifications
+    const webhooks = await prisma.discordWebhook.findMany({
+      where: { active: true },
+    });
+
+    // Process each monitor
+    for (const monitor of monitors) {
+      try {
+        // Update last checked timestamp
+        await prisma.retailerMonitor.update({
+          where: { id: monitor.id },
+          data: { lastCheckedAt: new Date() },
+        });
+
+        // TODO: Implement retailer-specific inventory scraping
+        // - Pokemon Center: Check product availability endpoint
+        // - Target: Use internal API
+        // - Shopify stores: Check /products.json
+        // - etc.
+
+        // Placeholder: In production, each retailer type would have its own scraper
+        // that checks inventory status and creates RESTOCK or PRICE_CHANGE signals
+
+      } catch (error) {
+        const errorMsg = `Error processing ${monitor.url}: ${error}`;
+        console.error(errorMsg);
+        results.errors.push(errorMsg);
+      }
+    }
+
+    const duration = Date.now() - startTime;
+
+    console.log("Inventory scrape completed", {
+      duration: `${duration}ms`,
+      ...results,
+    });
+
+    return NextResponse.json({
+      success: true,
+      duration: `${duration}ms`,
+      ...results,
+    });
+  } catch (error) {
+    console.error("Inventory scrape failed:", error);
+    return NextResponse.json(
+      { error: "Scrape failed", details: String(error) },
+      { status: 500 }
+    );
+  }
+}
+
+// Also support GET for Vercel Cron
+export async function GET(request: NextRequest) {
+  return POST(request);
+}

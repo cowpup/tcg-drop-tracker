@@ -1,0 +1,217 @@
+// TCG Drop Tracker - Prisma Schema
+// Database: Neon (Serverless Postgres)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Products — the TCG product catalog
+model Product {
+  id        String          @id @default(cuid())
+  name      String
+  game      Game
+  type      ProductType
+  imageUrl  String?
+  msrp      Float?
+  createdAt DateTime        @default(now())
+  drops     Drop[]
+  monitors  RetailerMonitor[]
+}
+
+// Drops — a specific retailer event for a product
+model Drop {
+  id          String     @id @default(cuid())
+  productId   String
+  product     Product    @relation(fields: [productId], references: [id])
+  retailer    Retailer
+  dropType    DropType
+  scheduledAt DateTime?
+  confirmedAt DateTime?
+  status      DropStatus @default(UPCOMING)
+  price       Float?
+  url         String?
+  notes       String?
+  signals     Signal[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([productId])
+  @@index([retailer])
+  @@index([status])
+  @@index([scheduledAt])
+}
+
+// Signals — queue detections, security changes, restock events
+model Signal {
+  id         String     @id @default(cuid())
+  dropId     String?
+  drop       Drop?      @relation(fields: [dropId], references: [id])
+  retailer   Retailer
+  type       SignalType
+  url        String
+  metadata   Json       // raw header snapshot, queue provider, etc.
+  detectedAt DateTime   @default(now())
+  notified   Boolean    @default(false)
+
+  @@index([dropId])
+  @@index([retailer])
+  @@index([type])
+  @@index([detectedAt])
+}
+
+// RetailerMonitor — HTTP state snapshots for fingerprint diffing
+model RetailerMonitor {
+  id                String   @id @default(cuid())
+  productId         String?
+  product           Product? @relation(fields: [productId], references: [id])
+  url               String   @unique
+  retailer          Retailer
+  lastStatus        Int?
+  lastBodySize      Int?
+  lastHeaders       Json?
+  lastRedirectChain Json?
+  lastCheckedAt     DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([productId])
+  @@index([retailer])
+}
+
+// TradeShow
+model TradeShow {
+  id          String    @id @default(cuid())
+  name        String
+  organizer   String?
+  showType    ShowType
+  tier        ShowTier  // determines pin size/style on map
+  startDate   DateTime
+  endDate     DateTime
+  venueName   String
+  address     String
+  city        String
+  state       String
+  zip         String?
+  country     String    @default("US")
+  lat         Float?
+  lng         Float?
+  website     String?
+  ticketUrl   String?
+  description String?
+  featured    Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([startDate])
+  @@index([state])
+  @@index([showType])
+}
+
+// User notification preferences
+model UserPreference {
+  id           String       @id @default(cuid())
+  clerkUserId  String       @unique
+  email        String?
+  games        Game[]
+  retailers    Retailer[]
+  signalTypes  SignalType[]
+  emailEnabled Boolean      @default(true)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+}
+
+// Discord webhooks registered by community operators
+model DiscordWebhook {
+  id          String       @id @default(cuid())
+  clerkUserId String
+  webhookUrl  String
+  label       String
+  games       Game[]
+  retailers   Retailer[]
+  signalTypes SignalType[]
+  active      Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([clerkUserId])
+  @@index([active])
+}
+
+// Enums
+enum Game {
+  POKEMON
+  MTG
+  YUGIOH
+  LORCANA
+  ONEPIECE
+  SPORTS
+  OTHER
+}
+
+enum ProductType {
+  BOOSTER_BOX
+  BOOSTER_PACK
+  ETB
+  BLISTERS
+  PROMO
+  GRADED
+  BUNDLE
+  OTHER
+}
+
+enum Retailer {
+  POKEMON_CENTER
+  TARGET
+  WALMART
+  AMAZON
+  GAMESTOP
+  BEST_BUY
+  TCG_PLAYER
+  SHOPIFY
+  OTHER
+}
+
+enum DropType {
+  NEW_RELEASE
+  RESTOCK
+  EXCLUSIVE
+  PREORDER
+  FLASH_SALE
+}
+
+enum DropStatus {
+  UPCOMING
+  LIVE
+  QUEUE_ACTIVE
+  SOLD_OUT
+  CANCELLED
+}
+
+enum SignalType {
+  RESTOCK
+  QUEUE_DETECTED
+  SECURITY_ESCALATED
+  PRICE_CHANGE
+  NEW_LISTING
+}
+
+enum ShowType {
+  CARD_SHOW
+  COMIC_CON
+  COLLECTACON
+  REGIONAL_CHAMPIONSHIP
+  NATIONALS
+  GAME_STORE_EVENT
+  OTHER
+}
+
+enum ShowTier {
+  LOCAL       // small pin
+  REGIONAL    // medium pin
+  MAJOR       // large pin, special style
+  NATIONAL    // largest, featured treatment
+}
