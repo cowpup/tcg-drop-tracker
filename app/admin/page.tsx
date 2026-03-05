@@ -12,6 +12,7 @@ import {
   Plus,
   Database,
   Zap,
+  Trash2,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -81,6 +82,32 @@ export default function AdminPage() {
     }
     if (isAdmin) fetchData();
   }, [isAdmin]);
+
+  const deleteProduct = async (id: string) => {
+    if (!confirm("Delete this product? This will also delete associated drops.")) return;
+    try {
+      const res = await fetch(`/api/products/${id}`, { method: "DELETE" });
+      if (res.ok) {
+        setProducts(products.filter((p) => p.id !== id));
+        setStats((s) => ({ ...s, products: s.products - 1 }));
+      }
+    } catch (err) {
+      console.error("Failed to delete product:", err);
+    }
+  };
+
+  const deleteDrop = async (id: string) => {
+    if (!confirm("Delete this drop?")) return;
+    try {
+      const res = await fetch(`/api/drops/${id}`, { method: "DELETE" });
+      if (res.ok) {
+        setDrops(drops.filter((d) => d.id !== id));
+        setStats((s) => ({ ...s, drops: s.drops - 1 }));
+      }
+    } catch (err) {
+      console.error("Failed to delete drop:", err);
+    }
+  };
 
   const runGeocode = async () => {
     setGeocoding(true);
@@ -298,6 +325,7 @@ export default function AdminPage() {
                   <th className="pb-2 text-left font-medium text-gray-500">Game</th>
                   <th className="pb-2 text-left font-medium text-gray-500">Type</th>
                   <th className="pb-2 text-right font-medium text-gray-500">MSRP</th>
+                  <th className="pb-2 text-right font-medium text-gray-500"></th>
                 </tr>
               </thead>
               <tbody>
@@ -311,6 +339,14 @@ export default function AdminPage() {
                     <td className="py-2 text-gray-600 dark:text-gray-400">{product.type}</td>
                     <td className="py-2 text-right text-gray-900 dark:text-white">
                       {product.msrp ? `$${product.msrp.toFixed(2)}` : "-"}
+                    </td>
+                    <td className="py-2 text-right">
+                      <button
+                        onClick={() => deleteProduct(product.id)}
+                        className="text-red-400 hover:text-red-600"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -345,6 +381,7 @@ export default function AdminPage() {
                   <th className="pb-2 text-left font-medium text-gray-500">Type</th>
                   <th className="pb-2 text-left font-medium text-gray-500">Status</th>
                   <th className="pb-2 text-left font-medium text-gray-500">Scheduled</th>
+                  <th className="pb-2 text-right font-medium text-gray-500"></th>
                 </tr>
               </thead>
               <tbody>
@@ -362,6 +399,14 @@ export default function AdminPage() {
                     </td>
                     <td className="py-2 text-gray-600 dark:text-gray-400">
                       {drop.scheduledAt ? new Date(drop.scheduledAt).toLocaleDateString() : "-"}
+                    </td>
+                    <td className="py-2 text-right">
+                      <button
+                        onClick={() => deleteDrop(drop.id)}
+                        className="text-red-400 hover:text-red-600"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
                     </td>
                   </tr>
                 ))}

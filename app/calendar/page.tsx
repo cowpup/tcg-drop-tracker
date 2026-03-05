@@ -2,20 +2,18 @@
 
 import { useState, useMemo } from "react";
 import { useDrops } from "@/hooks";
-import { Card, Badge, LoadingSpinner, Button } from "@/components/ui";
-import { GameLabels, RetailerLabels } from "@/types";
+import { Card, Badge, LoadingSpinner, Button, Modal } from "@/components/ui";
+import { GameLabels, RetailerLabels, DropTypeLabels } from "@/types";
 import {
   format,
   startOfMonth,
   endOfMonth,
   eachDayOfInterval,
-  isSameMonth,
-  isSameDay,
+  isToday,
   addMonths,
   subMonths,
-  isToday,
 } from "date-fns";
-import { ChevronLeft, ChevronRight, Download, Link as LinkIcon } from "lucide-react";
+import { ChevronLeft, ChevronRight, Download, Link as LinkIcon, ExternalLink, X } from "lucide-react";
 
 const gameColors: Record<string, string> = {
   POKEMON: "bg-blue-500",
@@ -27,8 +25,28 @@ const gameColors: Record<string, string> = {
   OTHER: "bg-gray-400",
 };
 
+interface Drop {
+  id: string;
+  retailer: string;
+  dropType: string;
+  status: string;
+  scheduledAt: string | null;
+  url: string | null;
+  price: number | null;
+  notes: string | null;
+  product: {
+    id: string;
+    name: string;
+    game: string;
+    type: string;
+    imageUrl: string | null;
+    msrp: number | null;
+  };
+}
+
 export default function CalendarPage() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [selectedDrop, setSelectedDrop] = useState<Drop | null>(null);
   const { drops, loading } = useDrops({ upcoming: true, limit: 100 });
 
   const calendarDays = useMemo(() => {
@@ -38,7 +56,7 @@ export default function CalendarPage() {
   }, [currentMonth]);
 
   const dropsByDate = useMemo(() => {
-    const map = new Map<string, typeof drops>();
+    const map = new Map<string, Drop[]>();
     drops.forEach((drop) => {
       if (drop.scheduledAt) {
         const key = format(new Date(drop.scheduledAt), "yyyy-MM-dd");
@@ -158,15 +176,16 @@ export default function CalendarPage() {
                   </div>
                   <div className="space-y-1">
                     {dayDrops.slice(0, 3).map((drop) => (
-                      <div
+                      <button
                         key={drop.id}
-                        className={`truncate rounded px-1 py-0.5 text-xs text-white ${
+                        onClick={() => setSelectedDrop(drop)}
+                        className={`w-full truncate rounded px-1 py-0.5 text-left text-xs text-white transition-opacity hover:opacity-80 ${
                           gameColors[drop.product.game] || "bg-gray-500"
                         }`}
                         title={`${drop.product.name} at ${RetailerLabels[drop.retailer]}`}
                       >
                         {drop.product.name}
-                      </div>
+                      </button>
                     ))}
                     {dayDrops.length > 3 && (
                       <div className="text-xs text-gray-500 dark:text-gray-400">
@@ -197,6 +216,102 @@ export default function CalendarPage() {
           ))}
         </div>
       </Card>
+
+      {/* Drop Detail Modal */}
+      <Modal
+        isOpen={!!selectedDrop}
+        onClose={() => setSelectedDrop(null)}
+        title="Drop Details"
+      >
+        {selectedDrop && (
+          <div className="space-y-4">
+            {/* Product Image */}
+            {selectedDrop.product.imageUrl && (
+              <div className="flex justify-center">
+                <img
+                  src={selectedDrop.product.imageUrl}
+                  alt={selectedDrop.product.name}
+                  className="h-48 w-auto rounded-lg object-contain"
+                />
+              </div>
+            )}
+
+            {/* Product Info */}
+            <div>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                {selectedDrop.product.name}
+              </h3>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <Badge variant="default">{GameLabels[selectedDrop.product.game]}</Badge>
+                <Badge variant="default">{selectedDrop.product.type}</Badge>
+              </div>
+            </div>
+
+            {/* Drop Details */}
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-500">Retailer</span>
+                <span className="font-medium text-gray-900 dark:text-white">
+                  {RetailerLabels[selectedDrop.retailer] || selectedDrop.retailer}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">Drop Type</span>
+                <span className="font-medium text-gray-900 dark:text-white">
+                  {DropTypeLabels[selectedDrop.dropType] || selectedDrop.dropType}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">Status</span>
+                <Badge variant={selectedDrop.status === "LIVE" ? "success" : "default"}>
+                  {selectedDrop.status}
+                </Badge>
+              </div>
+              {selectedDrop.scheduledAt && (
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Scheduled</span>
+                  <span className="font-medium text-gray-900 dark:text-white">
+                    {format(new Date(selectedDrop.scheduledAt), "PPp")}
+                  </span>
+                </div>
+              )}
+              {(selectedDrop.price || selectedDrop.product.msrp) && (
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Price</span>
+                  <span className="font-medium text-gray-900 dark:text-white">
+                    ${(selectedDrop.price || selectedDrop.product.msrp)?.toFixed(2)}
+                  </span>
+                </div>
+              )}
+              {selectedDrop.notes && (
+                <div className="mt-3 rounded-lg bg-gray-100 p-3 dark:bg-gray-800">
+                  <p className="text-gray-700 dark:text-gray-300">{selectedDrop.notes}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-2 pt-2">
+              {selectedDrop.url && (
+                <a
+                  href={selectedDrop.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1"
+                >
+                  <Button variant="primary" className="w-full">
+                    <ExternalLink className="h-4 w-4" />
+                    View at {RetailerLabels[selectedDrop.retailer] || "Retailer"}
+                  </Button>
+                </a>
+              )}
+              <Button variant="outline" onClick={() => setSelectedDrop(null)}>
+                Close
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }
