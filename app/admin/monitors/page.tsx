@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { Card, Button, Badge, LoadingSpinner } from "@/components/ui";
 import { Retailer, RetailerLabels } from "@/types";
-import { ArrowLeft, Save, Check, Trash2, ExternalLink, Download, RefreshCw } from "lucide-react";
+import { ArrowLeft, Save, Check, Trash2, ExternalLink, Download, RefreshCw, Search } from "lucide-react";
 import Link from "next/link";
 
 const ADMIN_USER_IDS = process.env.NEXT_PUBLIC_ADMIN_USER_IDS?.split(",") || [];
@@ -12,6 +12,7 @@ const ADMIN_USER_IDS = process.env.NEXT_PUBLIC_ADMIN_USER_IDS?.split(",") || [];
 interface Monitor {
   id: string;
   url: string;
+  name: string | null;
   retailer: string;
   lastCheckedAt: string | null;
   lastStatus: number | null;
@@ -45,6 +46,11 @@ export default function MonitorsPage() {
     total: number;
   } | null>(null);
   const [clearing, setClearing] = useState(false);
+  const [discovering, setDiscovering] = useState(false);
+  const [discoverResult, setDiscoverResult] = useState<{
+    discovered: number;
+    newMonitors: number;
+  } | null>(null);
 
   const isAdmin = userId && ADMIN_USER_IDS.includes(userId);
 
@@ -176,6 +182,41 @@ export default function MonitorsPage() {
     }
   };
 
+  const discoverProducts = async () => {
+    setDiscovering(true);
+    setDiscoverResult(null);
+    setError(null);
+
+    try {
+      const res = await fetch("/api/cron/discover-products", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${process.env.NEXT_PUBLIC_CRON_SECRET || "dev-secret"}`,
+        },
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Discovery failed");
+      }
+
+      setDiscoverResult({
+        discovered: data.discovered,
+        newMonitors: data.newMonitors,
+      });
+
+      // Refresh monitor list
+      const monitorsRes = await fetch("/api/monitors");
+      const monitorsData = await monitorsRes.json();
+      setMonitors(Array.isArray(monitorsData) ? monitorsData : []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Discovery failed");
+    } finally {
+      setDiscovering(false);
+    }
+  };
+
   if (!isAdmin) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
@@ -255,6 +296,42 @@ export default function MonitorsPage() {
               )}
             </Button>
           </div>
+        </div>
+      </Card>
+
+      {/* Auto Discovery */}
+      <Card>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+              Auto Discovery
+            </h2>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              Automatically scrape retailer sites to find new TCG products (runs hourly)
+            </p>
+            {discoverResult && (
+              <p className="mt-2 text-sm text-green-600 dark:text-green-400">
+                Found {discoverResult.discovered} products, added {discoverResult.newMonitors} new monitors
+              </p>
+            )}
+          </div>
+          <Button
+            variant="outline"
+            onClick={discoverProducts}
+            loading={discovering}
+          >
+            {discovering ? (
+              <>
+                <RefreshCw className="h-4 w-4 animate-spin" />
+                Discovering...
+              </>
+            ) : (
+              <>
+                <Search className="h-4 w-4" />
+                Discover Now
+              </>
+            )}
+          </Button>
         </div>
       </Card>
 
@@ -358,13 +435,11 @@ export default function MonitorsPage() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <Badge variant="default">{monitor.retailer}</Badge>
-                    {monitor.product && (
-                      <span className="text-sm font-medium text-gray-900 dark:text-white">
-                        {monitor.product.name}
-                      </span>
-                    )}
+                    <span className="text-sm font-medium text-gray-900 dark:text-white">
+                      {monitor.name || monitor.product?.name || "Unknown Product"}
+                    </span>
                   </div>
-                  <p className="mt-1 truncate text-sm text-gray-500 dark:text-gray-400">
+                  <p className="mt-1 truncate text-xs text-gray-400 dark:text-gray-500">
                     {monitor.url}
                   </p>
                   <div className="mt-1 flex items-center gap-3 text-xs text-gray-400">

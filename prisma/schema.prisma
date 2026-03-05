@@ -69,6 +69,7 @@ model RetailerMonitor {
   productId         String?
   product           Product? @relation(fields: [productId], references: [id])
   url               String   @unique
+  name              String?  // Extracted product name from URL or page
   retailer          Retailer
   lastStatus        Int?
   lastBodySize      Int?

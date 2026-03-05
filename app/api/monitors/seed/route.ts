@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/db";
 import { Retailer } from "@prisma/client/index.js";
+import { extractNameFromUrl } from "@/lib/scrapers/discovery";
 
 const ADMIN_USER_IDS = process.env.NEXT_PUBLIC_ADMIN_USER_IDS?.split(",") || [];
 
@@ -181,6 +182,7 @@ export async function POST() {
           data: {
             url: monitor.url,
             retailer: monitor.retailer,
+            name: extractNameFromUrl(monitor.url, monitor.retailer),
           },
         });
         created++;
