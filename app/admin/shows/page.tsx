@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { Card, Button, LoadingSpinner } from "@/components/ui";
 import { ShowType, ShowTier, ShowTypeLabels, ShowTierLabels } from "@/types";
-import { ArrowLeft, Save, Check } from "lucide-react";
+import { ArrowLeft, Save, Check, Download, RefreshCw, Trash2 } from "lucide-react";
 import Link from "next/link";
 
 const ADMIN_USER_IDS = process.env.NEXT_PUBLIC_ADMIN_USER_IDS?.split(",") || [];
@@ -22,6 +22,12 @@ export default function AddShowPage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [seeding, setSeeding] = useState(false);
+  const [seedResult, setSeedResult] = useState<{
+    created: number;
+    skipped: number;
+    total: number;
+  } | null>(null);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -42,6 +48,38 @@ export default function AddShowPage() {
   });
 
   const isAdmin = userId && ADMIN_USER_IDS.includes(userId);
+
+  const bulkSeedShows = async () => {
+    if (!confirm("Import 25+ verified trade shows including Collect-A-Con, The National, Pokemon Regionals, Comic-Con, and Gen Con?")) {
+      return;
+    }
+
+    setSeeding(true);
+    setSeedResult(null);
+    setError(null);
+
+    try {
+      const res = await fetch("/api/shows/seed", {
+        method: "POST",
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Seed failed");
+      }
+
+      setSeedResult({
+        created: data.created,
+        skipped: data.skipped,
+        total: data.total,
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Bulk seed failed");
+    } finally {
+      setSeeding(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -112,6 +150,42 @@ export default function AddShowPage() {
           </p>
         </div>
       </div>
+
+      {/* Bulk Import */}
+      <Card>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+              Bulk Import
+            </h2>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              Import verified trade shows: Collect-A-Con, The National, Pokemon Regionals, Comic-Con, Gen Con
+            </p>
+            {seedResult && (
+              <p className="mt-2 text-sm text-green-600 dark:text-green-400">
+                Created {seedResult.created} shows, skipped {seedResult.skipped} existing. Total: {seedResult.total}
+              </p>
+            )}
+          </div>
+          <Button
+            variant="outline"
+            onClick={bulkSeedShows}
+            loading={seeding}
+          >
+            {seeding ? (
+              <>
+                <RefreshCw className="h-4 w-4 animate-spin" />
+                Importing...
+              </>
+            ) : (
+              <>
+                <Download className="h-4 w-4" />
+                Import Shows
+              </>
+            )}
+          </Button>
+        </div>
+      </Card>
 
       <Card>
         <form onSubmit={handleSubmit} className="space-y-4">

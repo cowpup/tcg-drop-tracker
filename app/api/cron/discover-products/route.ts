@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { discoverAllProducts } from "@/lib/scrapers/discovery";
+import { discoverFromAllSitemaps } from "@/lib/scrapers/sitemap-discovery";
 
 // POST /api/cron/discover-products - Auto-discover new product URLs
 export async function POST(request: NextRequest) {
@@ -26,9 +27,35 @@ export async function POST(request: NextRequest) {
       byRetailer: {} as Record<string, { discovered: number; added: number }>,
     };
 
-    // Run product discovery
+    // Run both discovery methods in parallel
     console.log("Starting product discovery...");
-    const discovery = await discoverAllProducts();
+    const [basicDiscovery, sitemapDiscovery] = await Promise.all([
+      discoverAllProducts(),
+      discoverFromAllSitemaps(),
+    ]);
+
+    // Merge results from both discovery methods
+    const allProducts = [
+      ...basicDiscovery.products,
+      ...sitemapDiscovery.products,
+    ];
+
+    // Deduplicate by URL
+    const uniqueProducts = allProducts.filter(
+      (product, index, self) =>
+        index === self.findIndex((p) => p.url === product.url)
+    );
+
+    const discovery = {
+      products: uniqueProducts,
+      byRetailer: { ...basicDiscovery.byRetailer },
+      errors: [...basicDiscovery.errors, ...sitemapDiscovery.errors],
+    };
+
+    // Merge sitemap counts
+    for (const [retailer, count] of Object.entries(sitemapDiscovery.byRetailer)) {
+      discovery.byRetailer[retailer] = (discovery.byRetailer[retailer] || 0) + count;
+    }
 
     results.discovered = discovery.products.length;
     results.errors.push(...discovery.errors);
