@@ -44,6 +44,7 @@ export default function MonitorsPage() {
     skipped: number;
     total: number;
   } | null>(null);
+  const [clearing, setClearing] = useState(false);
 
   const isAdmin = userId && ADMIN_USER_IDS.includes(userId);
 
@@ -147,6 +148,34 @@ export default function MonitorsPage() {
     }
   };
 
+  const clearAllMonitors = async () => {
+    if (!confirm("DELETE ALL MONITORS? This cannot be undone. You can re-import verified URLs after.")) {
+      return;
+    }
+
+    setClearing(true);
+    setError(null);
+
+    try {
+      const res = await fetch("/api/monitors", {
+        method: "DELETE",
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Clear failed");
+      }
+
+      setMonitors([]);
+      setSeedResult(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to clear monitors");
+    } finally {
+      setClearing(false);
+    }
+  };
+
   if (!isAdmin) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
@@ -181,7 +210,7 @@ export default function MonitorsPage() {
               Bulk Import
             </h2>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Import 75+ pre-configured monitor URLs from major retailers
+              Import verified monitor URLs from major retailers (Pokemon Center, Target, Walmart, Amazon)
             </p>
             {seedResult && (
               <p className="mt-2 text-sm text-green-600 dark:text-green-400">
@@ -189,23 +218,43 @@ export default function MonitorsPage() {
               </p>
             )}
           </div>
-          <Button
-            variant="outline"
-            onClick={bulkSeedMonitors}
-            loading={seeding}
-          >
-            {seeding ? (
-              <>
-                <RefreshCw className="h-4 w-4 animate-spin" />
-                Importing...
-              </>
-            ) : (
-              <>
-                <Download className="h-4 w-4" />
-                Import Monitors
-              </>
-            )}
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={clearAllMonitors}
+              loading={clearing}
+              className="text-red-600 hover:text-red-700 hover:border-red-300"
+            >
+              {clearing ? (
+                <>
+                  <RefreshCw className="h-4 w-4 animate-spin" />
+                  Clearing...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4" />
+                  Clear All
+                </>
+              )}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={bulkSeedMonitors}
+              loading={seeding}
+            >
+              {seeding ? (
+                <>
+                  <RefreshCw className="h-4 w-4 animate-spin" />
+                  Importing...
+                </>
+              ) : (
+                <>
+                  <Download className="h-4 w-4" />
+                  Import Verified
+                </>
+              )}
+            </Button>
+          </div>
         </div>
       </Card>
 

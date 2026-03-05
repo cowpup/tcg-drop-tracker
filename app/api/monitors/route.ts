@@ -68,3 +68,28 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+
+// DELETE /api/monitors - Delete all monitors (admin only, use with caution)
+export async function DELETE() {
+  try {
+    const { userId } = await auth();
+
+    if (!userId || !ADMIN_USER_IDS.includes(userId)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const result = await prisma.retailerMonitor.deleteMany({});
+
+    return NextResponse.json({
+      success: true,
+      deleted: result.count,
+      message: `Deleted ${result.count} monitors`,
+    });
+  } catch (error) {
+    console.error("Error deleting monitors:", error);
+    return NextResponse.json(
+      { error: "Failed to delete monitors" },
+      { status: 500 }
+    );
+  }
+}
