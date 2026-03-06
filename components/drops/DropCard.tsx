@@ -37,83 +37,65 @@ export function DropCard({ drop }: DropCardProps) {
   const isLive = drop.status === "LIVE";
 
   return (
-    <article className="group relative">
-      {/* Accent bar on left */}
-      <div
-        className="absolute left-0 top-4 bottom-4 w-1 rounded-full transition-all group-hover:h-full group-hover:top-0 group-hover:bottom-0"
-        style={{ background: accent }}
-      />
+    <article className="group">
+      {/* Image */}
+      <div className="relative aspect-[4/3] rounded-xl overflow-hidden bg-white/[0.02] mb-4">
+        {drop.product.imageUrl ? (
+          <Image
+            src={drop.product.imageUrl}
+            alt={drop.product.name}
+            fill
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span
+              className="text-6xl font-black opacity-20"
+              style={{ color: accent }}
+            >
+              {gameName.charAt(0)}
+            </span>
+          </div>
+        )}
 
-      <div className="pl-6">
-        {/* Top row: game + signals */}
-        <div className="flex items-center gap-2 mb-3">
+        {/* Live badge */}
+        {isLive && (
+          <div className="absolute top-3 left-3 flex items-center gap-1.5 px-2 py-1 rounded-full bg-emerald-500/90 text-white text-xs font-semibold">
+            <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+            LIVE
+          </div>
+        )}
+
+        {/* Price */}
+        {drop.price && (
+          <div className="absolute bottom-3 right-3 px-2 py-1 rounded-lg bg-black/70 backdrop-blur-sm text-white font-bold">
+            ${drop.price.toFixed(0)}
+          </div>
+        )}
+      </div>
+
+      {/* Info */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <span
-            className="text-xs font-bold uppercase tracking-wider"
+            className="text-xs font-semibold uppercase tracking-wide"
             style={{ color: accent }}
           >
             {gameName}
           </span>
-          {isLive && (
-            <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-400">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              LIVE
-            </span>
-          )}
           {urgentSignals?.map((signal) => (
             <SignalBadge key={signal.id} type={signal.type} />
           ))}
         </div>
 
-        {/* Product image - breaking out of container */}
-        <div className="relative -ml-6 mb-4">
-          <div
-            className="relative aspect-[16/10] rounded-xl overflow-hidden bg-white/[0.02] transition-transform group-hover:scale-[1.02] group-hover:-rotate-1"
-          >
-            {drop.product.imageUrl ? (
-              <Image
-                src={drop.product.imageUrl}
-                alt={drop.product.name}
-                fill
-                className="object-cover"
-              />
-            ) : (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <span
-                  className="text-8xl font-black opacity-10"
-                  style={{ color: accent }}
-                >
-                  {gameName.charAt(0)}
-                </span>
-              </div>
-            )}
-
-            {/* Price tag - floating */}
-            {drop.price && (
-              <div
-                className="absolute bottom-3 right-3 px-3 py-1 rounded-lg text-lg font-bold backdrop-blur-md"
-                style={{
-                  background: "rgba(0,0,0,0.7)",
-                  color: "#fff",
-                }}
-              >
-                ${drop.price.toFixed(0)}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Product name - big and bold */}
-        <h3 className="text-xl font-bold text-[var(--foreground)] leading-tight mb-2 group-hover:text-[var(--drip-cyan)] transition-colors">
+        <h3 className="font-semibold text-[var(--foreground)] leading-snug group-hover:text-[var(--drip-cyan)] transition-colors">
           {drop.product.name}
         </h3>
 
-        {/* Meta row */}
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-[var(--foreground-muted)]">
+        <div className="flex items-center justify-between text-sm text-[var(--foreground-muted)]">
+          <span>
             {retailerName}
-            {drop.scheduledAt && (
-              <> · {format(new Date(drop.scheduledAt), "MMM d")}</>
-            )}
+            {drop.scheduledAt && <> · {format(new Date(drop.scheduledAt), "MMM d")}</>}
           </span>
 
           {drop.url && (
@@ -121,10 +103,9 @@ export function DropCard({ drop }: DropCardProps) {
               href={drop.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1 text-sm font-medium text-[var(--drip-cyan)] hover:underline"
+              className="flex items-center gap-1 text-[var(--drip-cyan)] hover:underline"
             >
-              Shop
-              <ArrowUpRight className="w-4 h-4" />
+              Shop <ArrowUpRight className="w-3 h-3" />
             </a>
           )}
         </div>
