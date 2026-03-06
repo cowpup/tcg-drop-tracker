@@ -162,61 +162,69 @@ export default function AdminPage() {
 
       {/* Quick Stats */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900">
-              <Package className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+        <Link href="/admin/products">
+          <Card hover className="cursor-pointer">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900">
+                <Package className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Products</p>
+                <p className="text-xl font-semibold text-gray-900 dark:text-white">
+                  {stats.products}
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Products</p>
-              <p className="text-xl font-semibold text-gray-900 dark:text-white">
-                {stats.products}
-              </p>
-            </div>
-          </div>
-        </Card>
+          </Card>
+        </Link>
 
-        <Card>
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100 dark:bg-green-900">
-              <Calendar className="h-5 w-5 text-green-600 dark:text-green-400" />
+        <Link href="/admin/drops">
+          <Card hover className="cursor-pointer">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100 dark:bg-green-900">
+                <Calendar className="h-5 w-5 text-green-600 dark:text-green-400" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Drops</p>
+                <p className="text-xl font-semibold text-gray-900 dark:text-white">
+                  {stats.drops}
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Drops</p>
-              <p className="text-xl font-semibold text-gray-900 dark:text-white">
-                {stats.drops}
-              </p>
-            </div>
-          </div>
-        </Card>
+          </Card>
+        </Link>
 
-        <Card>
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100 dark:bg-purple-900">
-              <MapPin className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+        <Link href="/admin/shows">
+          <Card hover className="cursor-pointer">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100 dark:bg-purple-900">
+                <MapPin className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Shows</p>
+                <p className="text-xl font-semibold text-gray-900 dark:text-white">
+                  {stats.shows}
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Shows</p>
-              <p className="text-xl font-semibold text-gray-900 dark:text-white">
-                {stats.shows}
-              </p>
-            </div>
-          </div>
-        </Card>
+          </Card>
+        </Link>
 
-        <Card>
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-900">
-              <Radio className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+        <Link href="/admin/signals">
+          <Card hover className="cursor-pointer">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-900">
+                <Radio className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Signals</p>
+                <p className="text-xl font-semibold text-gray-900 dark:text-white">
+                  {stats.signals}
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-gray-500 dark:text-gray-400">Signals</p>
-              <p className="text-xl font-semibold text-gray-900 dark:text-white">
-                {stats.signals}
-              </p>
-            </div>
-          </div>
-        </Card>
+          </Card>
+        </Link>
       </div>
 
       {/* Quick Actions */}
@@ -259,6 +267,12 @@ export default function AdminPage() {
             <Button variant="outline" className="w-full justify-start">
               <Users className="h-4 w-4" />
               Manage Users
+            </Button>
+          </Link>
+          <Link href="/admin/signals">
+            <Button variant="outline" className="w-full justify-start">
+              <Radio className="h-4 w-4" />
+              View Signals
             </Button>
           </Link>
         </div>

@@ -1,6 +1,7 @@
 "use client";
 
-import { Card, Badge } from "@/components/ui";
+import { useState, useEffect } from "react";
+import { Card, Badge, LoadingSpinner } from "@/components/ui";
 import { RetailerLabels } from "@/types";
 import {
   ExternalLink,
@@ -8,67 +9,19 @@ import {
   ShieldAlert,
   Radio,
   Clock,
+  RefreshCw,
+  AlertCircle,
 } from "lucide-react";
 
-// Placeholder data - in production this would come from live monitoring
-const retailers = [
-  {
-    id: "POKEMON_CENTER",
-    status: "normal",
-    lastChecked: new Date(),
-    queueActive: false,
-    securityLevel: "standard",
-    url: "https://www.pokemoncenter.com",
-  },
-  {
-    id: "TARGET",
-    status: "normal",
-    lastChecked: new Date(),
-    queueActive: false,
-    securityLevel: "standard",
-    url: "https://www.target.com",
-  },
-  {
-    id: "WALMART",
-    status: "elevated",
-    lastChecked: new Date(),
-    queueActive: false,
-    securityLevel: "elevated",
-    url: "https://www.walmart.com",
-  },
-  {
-    id: "AMAZON",
-    status: "normal",
-    lastChecked: new Date(),
-    queueActive: false,
-    securityLevel: "standard",
-    url: "https://www.amazon.com",
-  },
-  {
-    id: "GAMESTOP",
-    status: "normal",
-    lastChecked: new Date(),
-    queueActive: false,
-    securityLevel: "standard",
-    url: "https://www.gamestop.com",
-  },
-  {
-    id: "BEST_BUY",
-    status: "normal",
-    lastChecked: new Date(),
-    queueActive: false,
-    securityLevel: "standard",
-    url: "https://www.bestbuy.com",
-  },
-  {
-    id: "TCG_PLAYER",
-    status: "normal",
-    lastChecked: new Date(),
-    queueActive: false,
-    securityLevel: "standard",
-    url: "https://www.tcgplayer.com",
-  },
-];
+interface RetailerStatus {
+  id: string;
+  status: "normal" | "elevated" | "queue";
+  lastChecked: string | null;
+  queueActive: boolean;
+  securityLevel: "standard" | "elevated";
+  url: string;
+  activeSignals: number;
+}
 
 const statusConfig = {
   normal: { label: "Normal", variant: "success" as const, icon: ShieldCheck },
@@ -77,15 +30,60 @@ const statusConfig = {
 };
 
 export default function RetailersPage() {
+  const [retailers, setRetailers] = useState<RetailerStatus[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
+
+  const fetchStatus = async () => {
+    try {
+      setError(null);
+      const res = await fetch("/api/retailers/status");
+      if (!res.ok) throw new Error("Failed to fetch");
+      const data = await res.json();
+      setRetailers(data.data || []);
+      setLastRefresh(new Date());
+    } catch (err) {
+      setError("Failed to load retailer status");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchStatus();
+    // Auto-refresh every 60 seconds
+    const interval = setInterval(fetchStatus, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-          Retailer Status
-        </h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Live monitoring of retailer security status and queue detection
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            Retailer Status
+          </h1>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            Live monitoring of retailer security status and queue detection
+          </p>
+        </div>
+        <button
+          onClick={fetchStatus}
+          className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
+        >
+          <RefreshCw className="h-4 w-4" />
+          Refresh
+        </button>
       </div>
 
       {/* Status Legend */}
@@ -114,6 +112,15 @@ export default function RetailersPage() {
           </div>
         </div>
       </Card>
+
+      {error && (
+        <Card className="border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-900/20">
+          <div className="flex items-center gap-3">
+            <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
+            <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
+          </div>
+        </Card>
+      )}
 
       {/* Retailer Grid */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -171,13 +178,30 @@ export default function RetailersPage() {
                 <Clock className="h-3.5 w-3.5" />
                 <span>
                   Last checked:{" "}
-                  {retailer.lastChecked.toLocaleTimeString()}
+                  {retailer.lastChecked
+                    ? new Date(retailer.lastChecked).toLocaleTimeString()
+                    : "Not monitored yet"}
                 </span>
               </div>
+
+              {retailer.activeSignals > 0 && (
+                <div className="mt-2 text-xs text-amber-600 dark:text-amber-400">
+                  {retailer.activeSignals} active signal{retailer.activeSignals > 1 ? "s" : ""} in last 24h
+                </div>
+              )}
             </Card>
           );
         })}
       </div>
+
+      {retailers.length === 0 && !error && (
+        <Card className="py-8 text-center">
+          <ShieldCheck className="mx-auto h-12 w-12 text-gray-400" />
+          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+            No retailers are being monitored yet. Add monitors in the admin panel.
+          </p>
+        </Card>
+      )}
 
       {/* Info Notice */}
       <Card className="border-blue-200 bg-blue-50 dark:border-blue-900 dark:bg-blue-900/20">
@@ -197,6 +221,13 @@ export default function RetailersPage() {
           </div>
         </div>
       </Card>
+
+      {/* Last refresh indicator */}
+      {lastRefresh && (
+        <p className="text-center text-xs text-gray-400">
+          Last updated: {lastRefresh.toLocaleTimeString()} · Auto-refreshes every 60 seconds
+        </p>
+      )}
     </div>
   );
 }
