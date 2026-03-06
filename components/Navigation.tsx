@@ -1,13 +1,16 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   SignInButton,
   UserButton,
   Show,
+  useAuth,
 } from "@clerk/nextjs";
 import { Button } from "@/components/ui";
+import { Shield } from "lucide-react";
 
 const navLinks = [
   { href: "/", label: "Drops" },
@@ -23,6 +26,23 @@ const authLinks = [
 
 export function Navigation() {
   const pathname = usePathname();
+  const { isSignedIn } = useAuth();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    if (isSignedIn) {
+      fetch("/api/users/me")
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.data?.isAdmin) {
+            setIsAdmin(true);
+          }
+        })
+        .catch(() => {});
+    } else {
+      setIsAdmin(false);
+    }
+  }, [isSignedIn]);
 
   const isActive = (href: string) => {
     if (href === "/") {
@@ -102,6 +122,22 @@ export function Navigation() {
           <Show when="signed-in">
             <div className="hidden items-center gap-1 md:flex">
               <AuthLinks />
+              {isAdmin && (
+                <Link
+                  href="/admin"
+                  className={`
+                    flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition-colors
+                    ${
+                      isActive("/admin")
+                        ? "bg-amber-50 text-amber-600 dark:bg-amber-900/50 dark:text-amber-400"
+                        : "text-amber-600 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-900/30"
+                    }
+                  `}
+                >
+                  <Shield className="h-4 w-4" />
+                  Admin
+                </Link>
+              )}
             </div>
             <UserButton
               appearance={{
@@ -157,6 +193,22 @@ export function Navigation() {
               {link.label}
             </Link>
           ))}
+          {isAdmin && (
+            <Link
+              href="/admin"
+              className={`
+                flex items-center gap-1 whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-colors
+                ${
+                  isActive("/admin")
+                    ? "bg-amber-50 text-amber-600 dark:bg-amber-900/50 dark:text-amber-400"
+                    : "text-amber-600 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-900/30"
+                }
+              `}
+            >
+              <Shield className="h-3.5 w-3.5" />
+              Admin
+            </Link>
+          )}
         </Show>
       </div>
     </header>
