@@ -118,59 +118,135 @@ export function ShowMap({ shows }: ShowMapProps) {
     markersRef.current.forEach((marker) => marker.remove());
     markersRef.current = [];
 
-    // Add new markers
+    // Group shows by location (round to ~100m precision to catch same-venue shows)
+    const locationGroups = new Map<string, TradeShow[]>();
     filteredShows.forEach((show) => {
-      const { color } = getProximityInfo(show);
-      const daysUntil = differenceInDays(new Date(show.startDate), new Date());
+      const key = `${show.lat?.toFixed(3)},${show.lng?.toFixed(3)}`;
+      if (!locationGroups.has(key)) {
+        locationGroups.set(key, []);
+      }
+      locationGroups.get(key)!.push(show);
+    });
+
+    // Create markers for each location group
+    locationGroups.forEach((showsAtLocation) => {
+      // Sort by date
+      showsAtLocation.sort((a, b) =>
+        new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
+      );
+
+      const firstShow = showsAtLocation[0];
+      const hasMultiple = showsAtLocation.length > 1;
+
+      // Use the color of the soonest show
+      const { color } = getProximityInfo(firstShow);
 
       // Create custom marker element
       const el = document.createElement("div");
       el.className = "custom-marker";
       el.style.cssText = `
-        width: 28px;
-        height: 28px;
+        width: ${hasMultiple ? 32 : 28}px;
+        height: ${hasMultiple ? 32 : 28}px;
         background-color: ${color};
         border-radius: 50%;
         border: 3px solid white;
         box-shadow: 0 2px 6px rgba(0,0,0,0.3);
         cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: bold;
+        color: white;
       `;
 
-      // Create popup with proper anchor
+      // Show count if multiple shows
+      if (hasMultiple) {
+        el.textContent = String(showsAtLocation.length);
+      }
+
+      // Build popup HTML
+      let popupHtml: string;
+
+      if (hasMultiple) {
+        // Multiple shows - show list
+        popupHtml = `
+          <div style="min-width: 260px; max-height: 300px; overflow-y: auto; font-family: system-ui, sans-serif;">
+            <p style="margin: 0 0 8px 0; font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 0.5px;">
+              ${showsAtLocation.length} events at this venue
+            </p>
+            ${showsAtLocation.map((show) => {
+              const { color: showColor } = getProximityInfo(show);
+              const daysUntil = differenceInDays(new Date(show.startDate), new Date());
+              return `
+                <div style="padding: 10px 0; border-bottom: 1px solid #eee;">
+                  <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                    <span style="width: 10px; height: 10px; border-radius: 50%; background: ${showColor}; flex-shrink: 0;"></span>
+                    <h4 style="margin: 0; font-size: 13px; font-weight: 600; color: #111;">
+                      ${show.name}
+                    </h4>
+                  </div>
+                  <p style="margin: 0 0 4px 18px; font-size: 12px; font-weight: 500; color: #333;">
+                    ${format(new Date(show.startDate), "MMM d")} - ${format(new Date(show.endDate), "MMM d, yyyy")}
+                  </p>
+                  <p style="margin: 0 0 4px 18px; font-size: 11px; color: ${showColor};">
+                    ${daysUntil === 0 ? "Today!" : daysUntil === 1 ? "Tomorrow!" : `${daysUntil} days away`}
+                  </p>
+                  ${show.website ? `
+                    <a href="${show.website}" target="_blank" rel="noopener noreferrer"
+                       style="display: inline-block; margin-left: 18px; font-size: 11px; color: #2563eb; text-decoration: none;">
+                      Website →
+                    </a>
+                  ` : ""}
+                </div>
+              `;
+            }).join("")}
+            <p style="margin: 8px 0 0 0; font-size: 11px; color: #999;">
+              ${firstShow.venueName}<br/>${firstShow.city}, ${firstShow.state}
+            </p>
+          </div>
+        `;
+      } else {
+        // Single show - original popup
+        const show = firstShow;
+        const daysUntil = differenceInDays(new Date(show.startDate), new Date());
+        popupHtml = `
+          <div style="min-width: 220px; font-family: system-ui, sans-serif;">
+            <h3 style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #111;">
+              ${show.name}
+            </h3>
+            <p style="margin: 0 0 4px 0; font-size: 12px; color: #666;">
+              ${show.venueName}
+            </p>
+            <p style="margin: 0 0 8px 0; font-size: 12px; color: #666;">
+              ${show.city}, ${show.state}
+            </p>
+            <p style="margin: 0 0 8px 0; font-size: 13px; font-weight: 500; color: #111;">
+              ${format(new Date(show.startDate), "MMM d")} - ${format(new Date(show.endDate), "MMM d, yyyy")}
+            </p>
+            <p style="margin: 0 0 8px 0; font-size: 12px; color: ${color}; font-weight: 500;">
+              ${daysUntil === 0 ? "Today!" : daysUntil === 1 ? "Tomorrow!" : `${daysUntil} days away`}
+            </p>
+            ${show.website ? `
+              <a href="${show.website}" target="_blank" rel="noopener noreferrer"
+                 style="display: inline-block; margin-top: 4px; font-size: 12px; color: #2563eb; text-decoration: none;">
+                Visit Website →
+              </a>
+            ` : ""}
+          </div>
+        `;
+      }
+
       const popup = new mapboxgl.Popup({
         offset: [0, -14],
         anchor: "bottom",
         closeButton: true,
         closeOnClick: true,
-        maxWidth: "280px"
-      }).setHTML(`
-        <div style="min-width: 220px; font-family: system-ui, sans-serif;">
-          <h3 style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #111;">
-            ${show.name}
-          </h3>
-          <p style="margin: 0 0 4px 0; font-size: 12px; color: #666;">
-            ${show.venueName}
-          </p>
-          <p style="margin: 0 0 8px 0; font-size: 12px; color: #666;">
-            ${show.city}, ${show.state}
-          </p>
-          <p style="margin: 0 0 8px 0; font-size: 13px; font-weight: 500; color: #111;">
-            ${format(new Date(show.startDate), "MMM d")} - ${format(new Date(show.endDate), "MMM d, yyyy")}
-          </p>
-          <p style="margin: 0 0 8px 0; font-size: 12px; color: ${color}; font-weight: 500;">
-            ${daysUntil === 0 ? "Today!" : daysUntil === 1 ? "Tomorrow!" : `${daysUntil} days away`}
-          </p>
-          ${show.website ? `
-            <a href="${show.website}" target="_blank" rel="noopener noreferrer"
-               style="display: inline-block; margin-top: 4px; font-size: 12px; color: #2563eb; text-decoration: none;">
-              Visit Website →
-            </a>
-          ` : ""}
-        </div>
-      `);
+        maxWidth: hasMultiple ? "320px" : "280px"
+      }).setHTML(popupHtml);
 
       const marker = new mapboxgl.Marker(el)
-        .setLngLat([show.lng!, show.lat!])
+        .setLngLat([firstShow.lng!, firstShow.lat!])
         .setPopup(popup)
         .addTo(map.current!);
 
