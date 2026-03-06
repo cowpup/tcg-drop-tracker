@@ -107,17 +107,16 @@ export function ShowMap({ shows }: ShowMapProps) {
         border: 3px solid white;
         box-shadow: 0 2px 6px rgba(0,0,0,0.3);
         cursor: pointer;
-        transition: transform 0.2s;
       `;
-      el.addEventListener("mouseenter", () => {
-        el.style.transform = "scale(1.2)";
-      });
-      el.addEventListener("mouseleave", () => {
-        el.style.transform = "scale(1)";
-      });
 
-      // Create popup
-      const popup = new mapboxgl.Popup({ offset: 25, closeButton: true }).setHTML(`
+      // Create popup with proper anchor
+      const popup = new mapboxgl.Popup({
+        offset: [0, -14],
+        anchor: "bottom",
+        closeButton: true,
+        closeOnClick: true,
+        maxWidth: "280px"
+      }).setHTML(`
         <div style="min-width: 220px; font-family: system-ui, sans-serif;">
           <h3 style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #111;">
             ${show.name}

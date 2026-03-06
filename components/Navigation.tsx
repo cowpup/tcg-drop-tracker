@@ -18,7 +18,7 @@ const navLinks = [
 
 const authLinks = [
   { href: "/dashboard", label: "Dashboard" },
-  { href: "/webhooks", label: "Webhooks" },
+  { href: "/webhooks", label: "Alerts" },
 ];
 
 export function Navigation() {

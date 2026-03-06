@@ -220,11 +220,96 @@ export default function WebhooksPage() {
       <div className="flex flex-col items-center justify-center py-12">
         <Webhook className="h-12 w-12 text-gray-400" />
         <h1 className="mt-4 text-2xl font-bold text-gray-900 dark:text-white">
-          Sign in to manage webhooks
+          Sign in to set up alerts
         </h1>
         <p className="mt-2 text-gray-500 dark:text-gray-400">
-          Create an account to set up Discord alerts
+          Create an account to get notified about drops
         </p>
+      </div>
+    );
+  }
+
+  // Free tier users see subscriber benefits instead of webhook management
+  if (userProfile && !userProfile.canCreateWebhooks) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            Discord Alerts
+          </h1>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            Get notified instantly when drops go live
+          </p>
+        </div>
+
+        <Card>
+          <div className="text-center py-6">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-600">
+              <Webhook className="h-8 w-8 text-white" />
+            </div>
+            <h2 className="mt-4 text-xl font-bold text-gray-900 dark:text-white">
+              Unlock Discord Alerts
+            </h2>
+            <p className="mt-2 text-gray-500 dark:text-gray-400 max-w-md mx-auto">
+              Subscribers get instant Discord notifications the moment drops go live. Never miss a restock again.
+            </p>
+          </div>
+        </Card>
+
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <Card>
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100 dark:bg-green-900">
+                <Check className="h-5 w-5 text-green-600 dark:text-green-400" />
+              </div>
+              <div>
+                <h3 className="font-medium text-gray-900 dark:text-white">Instant Alerts</h3>
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                  Get pinged in Discord within seconds of a drop going live
+                </p>
+              </div>
+            </div>
+          </Card>
+
+          <Card>
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 dark:bg-blue-900">
+                <Check className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div>
+                <h3 className="font-medium text-gray-900 dark:text-white">Custom Filters</h3>
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                  Only get alerts for games and retailers you care about
+                </p>
+              </div>
+            </div>
+          </Card>
+
+          <Card>
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100 dark:bg-purple-900">
+                <Check className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+              </div>
+              <div>
+                <h3 className="font-medium text-gray-900 dark:text-white">Multiple Servers</h3>
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                  Connect multiple Discord servers with different alert settings
+                </p>
+              </div>
+            </div>
+          </Card>
+        </div>
+
+        <Card>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Your current plan: <span className="font-medium text-gray-900 dark:text-white">{userProfile.subscriptionTier}</span>
+              </p>
+            </div>
+            <Badge variant="primary">Coming Soon</Badge>
+          </div>
+        </Card>
       </div>
     );
   }
@@ -234,43 +319,17 @@ export default function WebhooksPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Discord Webhooks
+            Discord Alerts
           </h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Send drop alerts directly to your Discord server
+            Get notified instantly when drops go live
           </p>
         </div>
-        {userProfile?.canCreateWebhooks ? (
-          <Button onClick={openCreateModal}>
-            <Plus className="h-4 w-4" />
-            Add Webhook
-          </Button>
-        ) : (
-          <Badge variant="warning">Subscriber Feature</Badge>
-        )}
+        <Button onClick={openCreateModal}>
+          <Plus className="h-4 w-4" />
+          Add Alert
+        </Button>
       </div>
-
-      {/* Subscription Required Notice */}
-      {userProfile && !userProfile.canCreateWebhooks && (
-        <Card>
-          <div className="flex items-start gap-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900">
-              <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-            </div>
-            <div>
-              <h3 className="font-medium text-gray-900 dark:text-white">
-                Subscription Required
-              </h3>
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                Discord webhook notifications are a subscriber feature. Upgrade your account to create webhooks and receive real-time drop alerts in your Discord server.
-              </p>
-              <p className="mt-2 text-xs text-gray-400">
-                Current tier: {userProfile.subscriptionTier}
-              </p>
-            </div>
-          </div>
-        </Card>
-      )}
 
       {error && (
         <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-900 dark:bg-red-900/20">
@@ -298,7 +357,7 @@ export default function WebhooksPage() {
             </p>
             <Button onClick={openCreateModal} className="mt-4">
               <Plus className="h-4 w-4" />
-              Add Your First Webhook
+              Add Your First Alert
             </Button>
           </div>
         </Card>
