@@ -96,7 +96,7 @@ export function ShowMap({ shows }: ShowMapProps) {
 
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
-      style: "mapbox://styles/mapbox/light-v11",
+      style: "mapbox://styles/mapbox/dark-v11",
       center: [-98.5795, 39.8283], // US center
       zoom: 3,
     });
@@ -171,22 +171,22 @@ export function ShowMap({ shows }: ShowMapProps) {
       if (hasMultiple) {
         // Multiple shows - show list
         popupHtml = `
-          <div style="min-width: 260px; max-height: 300px; overflow-y: auto; font-family: system-ui, sans-serif;">
-            <p style="margin: 0 0 8px 0; font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 0.5px;">
+          <div style="min-width: 260px; max-height: 300px; overflow-y: auto; font-family: system-ui, sans-serif; background: #161b22; color: #e6edf3; padding: 12px; border-radius: 8px;">
+            <p style="margin: 0 0 8px 0; font-size: 11px; color: #8b949e; text-transform: uppercase; letter-spacing: 0.5px;">
               ${showsAtLocation.length} events at this venue
             </p>
             ${showsAtLocation.map((show) => {
               const { color: showColor } = getProximityInfo(show);
               const daysUntil = differenceInDays(new Date(show.startDate), new Date());
               return `
-                <div style="padding: 10px 0; border-bottom: 1px solid #eee;">
+                <div style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
                   <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
                     <span style="width: 10px; height: 10px; border-radius: 50%; background: ${showColor}; flex-shrink: 0;"></span>
-                    <h4 style="margin: 0; font-size: 13px; font-weight: 600; color: #111;">
+                    <h4 style="margin: 0; font-size: 13px; font-weight: 600; color: #e6edf3;">
                       ${show.name}
                     </h4>
                   </div>
-                  <p style="margin: 0 0 4px 18px; font-size: 12px; font-weight: 500; color: #333;">
+                  <p style="margin: 0 0 4px 18px; font-size: 12px; font-weight: 500; color: #c9d1d9;">
                     ${format(new Date(show.startDate), "MMM d")} - ${format(new Date(show.endDate), "MMM d, yyyy")}
                   </p>
                   <p style="margin: 0 0 4px 18px; font-size: 11px; color: ${showColor};">
@@ -194,14 +194,14 @@ export function ShowMap({ shows }: ShowMapProps) {
                   </p>
                   ${show.website ? `
                     <a href="${show.website}" target="_blank" rel="noopener noreferrer"
-                       style="display: inline-block; margin-left: 18px; font-size: 11px; color: #2563eb; text-decoration: none;">
+                       style="display: inline-block; margin-left: 18px; font-size: 11px; color: #00d4ff; text-decoration: none;">
                       Website →
                     </a>
                   ` : ""}
                 </div>
               `;
             }).join("")}
-            <p style="margin: 8px 0 0 0; font-size: 11px; color: #999;">
+            <p style="margin: 8px 0 0 0; font-size: 11px; color: #8b949e;">
               ${firstShow.venueName}<br/>${firstShow.city}, ${firstShow.state}
             </p>
           </div>
@@ -211,17 +211,17 @@ export function ShowMap({ shows }: ShowMapProps) {
         const show = firstShow;
         const daysUntil = differenceInDays(new Date(show.startDate), new Date());
         popupHtml = `
-          <div style="min-width: 220px; font-family: system-ui, sans-serif;">
-            <h3 style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #111;">
+          <div style="min-width: 220px; font-family: system-ui, sans-serif; background: #161b22; color: #e6edf3; padding: 12px; border-radius: 8px;">
+            <h3 style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #e6edf3;">
               ${show.name}
             </h3>
-            <p style="margin: 0 0 4px 0; font-size: 12px; color: #666;">
+            <p style="margin: 0 0 4px 0; font-size: 12px; color: #8b949e;">
               ${show.venueName}
             </p>
-            <p style="margin: 0 0 8px 0; font-size: 12px; color: #666;">
+            <p style="margin: 0 0 8px 0; font-size: 12px; color: #8b949e;">
               ${show.city}, ${show.state}
             </p>
-            <p style="margin: 0 0 8px 0; font-size: 13px; font-weight: 500; color: #111;">
+            <p style="margin: 0 0 8px 0; font-size: 13px; font-weight: 500; color: #c9d1d9;">
               ${format(new Date(show.startDate), "MMM d")} - ${format(new Date(show.endDate), "MMM d, yyyy")}
             </p>
             <p style="margin: 0 0 8px 0; font-size: 12px; color: ${color}; font-weight: 500;">
@@ -229,7 +229,7 @@ export function ShowMap({ shows }: ShowMapProps) {
             </p>
             ${show.website ? `
               <a href="${show.website}" target="_blank" rel="noopener noreferrer"
-                 style="display: inline-block; margin-top: 4px; font-size: 12px; color: #2563eb; text-decoration: none;">
+                 style="display: inline-block; margin-top: 4px; font-size: 12px; color: #00d4ff; text-decoration: none;">
                 Visit Website →
               </a>
             ` : ""}
@@ -265,10 +265,10 @@ export function ShowMap({ shows }: ShowMapProps) {
 
   if (!mapboxToken) {
     return (
-      <div className="flex h-[400px] items-center justify-center rounded-lg border border-gray-200 bg-gray-100 dark:border-gray-700 dark:bg-gray-800">
+      <div className="flex h-[400px] items-center justify-center rounded-lg border border-white/10 bg-[var(--background-elevated)]">
         <div className="text-center">
-          <MapPin className="mx-auto h-10 w-10 text-gray-400" />
-          <p className="mt-3 text-gray-600 dark:text-gray-400">
+          <MapPin className="mx-auto h-10 w-10 text-[var(--foreground-muted)]" />
+          <p className="mt-3 text-[var(--foreground-muted)]">
             Map unavailable - NEXT_PUBLIC_MAPBOX_TOKEN not configured
           </p>
         </div>
@@ -278,13 +278,13 @@ export function ShowMap({ shows }: ShowMapProps) {
 
   if (mappableShows.length === 0) {
     return (
-      <div className="flex h-[400px] items-center justify-center rounded-lg border border-gray-200 bg-gray-100 dark:border-gray-700 dark:bg-gray-800">
+      <div className="flex h-[400px] items-center justify-center rounded-lg border border-white/10 bg-[var(--background-elevated)]">
         <div className="text-center">
-          <MapPin className="mx-auto h-10 w-10 text-gray-400" />
-          <p className="mt-3 text-gray-600 dark:text-gray-400">
+          <MapPin className="mx-auto h-10 w-10 text-[var(--foreground-muted)]" />
+          <p className="mt-3 text-[var(--foreground-muted)]">
             No shows with location data
           </p>
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm text-[var(--foreground-muted)]">
             Import shows and run geocoding from the admin panel
           </p>
         </div>
@@ -298,15 +298,15 @@ export function ShowMap({ shows }: ShowMapProps) {
       <div className="flex flex-wrap items-center gap-4">
         {/* Time Filter */}
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">When:</span>
+          <span className="text-sm font-medium text-[var(--foreground-muted)]">When:</span>
           {TIME_FILTERS.map((filter) => (
             <button
               key={filter.id}
               onClick={() => setSelectedTime(filter.id)}
               className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium transition-colors ${
                 selectedTime === filter.id
-                  ? "bg-gray-900 text-white dark:bg-white dark:text-gray-900"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+                  ? "bg-[var(--drip-cyan)] text-[var(--background)]"
+                  : "bg-white/5 text-[var(--foreground-muted)] hover:bg-white/10 hover:text-[var(--foreground)]"
               }`}
             >
               {filter.color && (
@@ -320,19 +320,19 @@ export function ShowMap({ shows }: ShowMapProps) {
           ))}
         </div>
 
-        <div className="h-4 w-px bg-gray-300 dark:bg-gray-600" />
+        <div className="h-4 w-px bg-white/10" />
 
         {/* Game Filter */}
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Type:</span>
+          <span className="text-sm font-medium text-[var(--foreground-muted)]">Type:</span>
           {GAME_FILTERS.map((filter) => (
             <button
               key={filter.id}
               onClick={() => setSelectedGame(filter.id)}
               className={`rounded-full px-3 py-1 text-sm font-medium transition-colors ${
                 selectedGame === filter.id
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+                  ? "bg-[var(--drip-cyan)] text-[var(--background)]"
+                  : "bg-white/5 text-[var(--foreground-muted)] hover:bg-white/10 hover:text-[var(--foreground)]"
               }`}
             >
               {filter.label}
@@ -342,33 +342,33 @@ export function ShowMap({ shows }: ShowMapProps) {
       </div>
 
       {/* Interactive Map */}
-      <div className="relative overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
+      <div className="relative overflow-hidden rounded-lg border border-white/10">
         <div ref={mapContainer} className="h-[450px] w-full" />
 
         {/* Legend - positioned above Mapbox logo */}
-        <div className="absolute bottom-12 left-4 rounded-lg bg-white/95 p-3 shadow-lg backdrop-blur-sm dark:bg-gray-800/95">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+        <div className="absolute bottom-12 left-4 rounded-lg bg-[#161b22]/95 p-3 shadow-lg backdrop-blur-sm border border-white/10">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-[var(--foreground-muted)]">
             Legend
           </p>
           <div className="space-y-1.5">
             <div className="flex items-center gap-2">
               <span className="h-3 w-3 rounded-full bg-red-500"></span>
-              <span className="text-xs text-gray-700 dark:text-gray-300">This Week</span>
+              <span className="text-xs text-[var(--foreground)]">This Week</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="h-3 w-3 rounded-full bg-amber-500"></span>
-              <span className="text-xs text-gray-700 dark:text-gray-300">This Month</span>
+              <span className="text-xs text-[var(--foreground)]">This Month</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="h-3 w-3 rounded-full bg-green-500"></span>
-              <span className="text-xs text-gray-700 dark:text-gray-300">30+ Days</span>
+              <span className="text-xs text-[var(--foreground)]">30+ Days</span>
             </div>
           </div>
         </div>
 
         {/* Show count */}
-        <div className="absolute bottom-4 right-4 rounded-lg bg-white/95 px-3 py-2 shadow-lg backdrop-blur-sm dark:bg-gray-800/95">
-          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+        <div className="absolute bottom-4 right-4 rounded-lg bg-[#161b22]/95 px-3 py-2 shadow-lg backdrop-blur-sm border border-white/10">
+          <p className="text-sm font-medium text-[var(--foreground)]">
             {filteredShows.length} {filteredShows.length === 1 ? "show" : "shows"}
           </p>
         </div>
@@ -381,17 +381,17 @@ export function ShowMap({ shows }: ShowMapProps) {
           return (
             <div
               key={show.id}
-              className="flex items-center gap-3 rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-800"
+              className="flex items-center gap-3 rounded-lg border border-white/[0.06] bg-[var(--background-elevated)] p-3 hover:border-[var(--drip-cyan)]/30 transition-colors"
             >
               <div
                 className="h-3 w-3 flex-shrink-0 rounded-full"
                 style={{ backgroundColor: color }}
               />
               <div className="min-w-0 flex-1">
-                <p className="truncate font-medium text-gray-900 dark:text-white">
+                <p className="truncate font-medium text-[var(--foreground)]">
                   {show.name}
                 </p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
+                <p className="text-sm text-[var(--foreground-muted)]">
                   {show.city}, {show.state} · {format(new Date(show.startDate), "MMM d")}
                 </p>
               </div>
@@ -400,7 +400,7 @@ export function ShowMap({ shows }: ShowMapProps) {
                   href={show.website}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700"
+                  className="rounded p-1 text-[var(--foreground-muted)] hover:bg-white/5 hover:text-[var(--drip-cyan)] transition-colors"
                 >
                   <ExternalLink className="h-4 w-4" />
                 </a>
@@ -410,7 +410,7 @@ export function ShowMap({ shows }: ShowMapProps) {
         })}
       </div>
       {filteredShows.length > 9 && (
-        <p className="text-center text-sm text-gray-500 dark:text-gray-400">
+        <p className="text-center text-sm text-[var(--foreground-muted)]">
           +{filteredShows.length - 9} more shows
         </p>
       )}
