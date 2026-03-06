@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+import { auth, clerkClient } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/db";
 
 const SUPER_ADMIN_ID = "user_3AXkPvNHZ8Jc09Csj9IWHKipRF9";
@@ -22,13 +22,52 @@ export async function GET() {
     if (!user) {
       const role = userId === SUPER_ADMIN_ID ? "SUPER_ADMIN" : "USER";
 
+      // Fetch user details from Clerk
+      let email: string | null = null;
+      let displayName: string | null = null;
+
+      try {
+        const clerk = await clerkClient();
+        const clerkUser = await clerk.users.getUser(userId);
+        email = clerkUser.emailAddresses?.[0]?.emailAddress || null;
+        displayName = clerkUser.firstName
+          ? `${clerkUser.firstName}${clerkUser.lastName ? ` ${clerkUser.lastName}` : ''}`
+          : clerkUser.username || null;
+      } catch (e) {
+        console.error("Failed to fetch Clerk user details:", e);
+      }
+
       user = await prisma.user.create({
         data: {
           clerkUserId: userId,
+          email,
+          displayName,
           role,
           subscriptionTier: "FREE",
         },
       });
+    } else if (!user.email || !user.displayName) {
+      // Update existing user if missing email/name
+      try {
+        const clerk = await clerkClient();
+        const clerkUser = await clerk.users.getUser(userId);
+        const email = clerkUser.emailAddresses?.[0]?.emailAddress || null;
+        const displayName = clerkUser.firstName
+          ? `${clerkUser.firstName}${clerkUser.lastName ? ` ${clerkUser.lastName}` : ''}`
+          : clerkUser.username || null;
+
+        if (email || displayName) {
+          user = await prisma.user.update({
+            where: { id: user.id },
+            data: {
+              ...(email && !user.email ? { email } : {}),
+              ...(displayName && !user.displayName ? { displayName } : {}),
+            },
+          });
+        }
+      } catch (e) {
+        console.error("Failed to update user from Clerk:", e);
+      }
     }
 
     // Check if subscription is expired

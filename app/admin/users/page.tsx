@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { Card, Button, Badge, LoadingSpinner } from "@/components/ui";
-import { ArrowLeft, Search, Shield, Crown, Users, CreditCard, Save, X } from "lucide-react";
+import { ArrowLeft, Search, Shield, Crown, Users, CreditCard, Save, X, RefreshCw } from "lucide-react";
 import Link from "next/link";
 
 const SUPER_ADMIN_ID = "user_3AXkPvNHZ8Jc09Csj9IWHKipRF9";
@@ -49,13 +49,34 @@ export default function UsersPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [saving, setSaving] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [syncMessage, setSyncMessage] = useState<string | null>(null);
 
   const isSuperAdmin = userId === SUPER_ADMIN_ID;
 
   useEffect(() => {
     fetchUsers();
   }, []);
+
+  const syncUsers = async () => {
+    setSyncing(true);
+    setSyncMessage(null);
+    try {
+      const res = await fetch("/api/users", { method: "PATCH" });
+      const data = await res.json();
+      if (res.ok) {
+        setSyncMessage(`Synced ${data.synced} users from Clerk`);
+        fetchUsers(); // Refresh the list
+      } else {
+        setError(data.error);
+      }
+    } catch (err) {
+      setError("Failed to sync users");
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   const fetchUsers = async () => {
     try {
@@ -121,21 +142,33 @@ export default function UsersPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Link href="/admin">
-          <Button variant="ghost" size="sm">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            User Management
-          </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Manage user roles and subscriptions
-          </p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Link href="/admin">
+            <Button variant="ghost" size="sm">
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          </Link>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+              User Management
+            </h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Manage user roles and subscriptions
+            </p>
+          </div>
         </div>
+        <Button onClick={syncUsers} loading={syncing} variant="outline" size="sm">
+          <RefreshCw className="h-4 w-4" />
+          Sync from Clerk
+        </Button>
       </div>
+
+      {syncMessage && (
+        <div className="rounded-lg bg-green-50 p-3 text-sm text-green-600 dark:bg-green-900/20 dark:text-green-400">
+          {syncMessage}
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid gap-4 sm:grid-cols-3">

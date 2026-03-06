@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@clerk/nextjs/server";
+import { auth, clerkClient } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/db";
 import { UserRole, SubscriptionTier } from "@prisma/client/index.js";
 
@@ -139,6 +139,73 @@ export async function POST(request: NextRequest) {
     console.error("Error creating/updating user:", error);
     return NextResponse.json(
       { error: "Failed to create/update user" },
+      { status: 500 }
+    );
+  }
+}
+
+// PATCH /api/users - Sync all users with Clerk (admin only)
+export async function PATCH() {
+  try {
+    const { userId } = await auth();
+
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { isAdmin } = await getAdminStatus(userId);
+    if (!isAdmin && userId !== SUPER_ADMIN_ID) {
+      return NextResponse.json({ error: "Admin access required" }, { status: 403 });
+    }
+
+    // Get all users missing email or displayName
+    const usersToSync = await prisma.user.findMany({
+      where: {
+        OR: [
+          { email: null },
+          { displayName: null },
+        ],
+      },
+    });
+
+    const clerk = await clerkClient();
+    let synced = 0;
+    let failed = 0;
+
+    for (const user of usersToSync) {
+      try {
+        const clerkUser = await clerk.users.getUser(user.clerkUserId);
+        const email = clerkUser.emailAddresses?.[0]?.emailAddress || null;
+        const displayName = clerkUser.firstName
+          ? `${clerkUser.firstName}${clerkUser.lastName ? ` ${clerkUser.lastName}` : ''}`
+          : clerkUser.username || null;
+
+        if (email || displayName) {
+          await prisma.user.update({
+            where: { id: user.id },
+            data: {
+              ...(email && !user.email ? { email } : {}),
+              ...(displayName && !user.displayName ? { displayName } : {}),
+            },
+          });
+          synced++;
+        }
+      } catch (e) {
+        console.error(`Failed to sync user ${user.clerkUserId}:`, e);
+        failed++;
+      }
+    }
+
+    return NextResponse.json({
+      message: `Synced ${synced} users, ${failed} failed`,
+      synced,
+      failed,
+      total: usersToSync.length,
+    });
+  } catch (error) {
+    console.error("Error syncing users:", error);
+    return NextResponse.json(
+      { error: "Failed to sync users" },
       { status: 500 }
     );
   }
