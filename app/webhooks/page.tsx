@@ -51,8 +51,11 @@ const signalTypeOptions = Object.values(SignalType).map((t) => ({
 
 interface UserProfile {
   canCreateWebhooks: boolean;
+  canAddMoreWebhooks: boolean;
   subscriptionTier: string;
   role: string;
+  webhookCount: number;
+  webhookLimit: number;
 }
 
 export default function WebhooksPage() {
@@ -314,6 +317,8 @@ export default function WebhooksPage() {
     );
   }
 
+  const atLimit = userProfile && userProfile.webhookCount >= userProfile.webhookLimit;
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -325,10 +330,17 @@ export default function WebhooksPage() {
             Send drop alerts to your Discord server
           </p>
         </div>
-        <Button onClick={openCreateModal}>
-          <Plus className="h-4 w-4" />
-          Add Server
-        </Button>
+        <div className="flex items-center gap-3">
+          {userProfile && userProfile.webhookLimit < 999 && (
+            <span className="text-sm text-gray-500 dark:text-gray-400">
+              {userProfile.webhookCount} / {userProfile.webhookLimit} servers
+            </span>
+          )}
+          <Button onClick={openCreateModal} disabled={atLimit}>
+            <Plus className="h-4 w-4" />
+            Add Server
+          </Button>
+        </div>
       </div>
 
       {error && (
@@ -339,6 +351,22 @@ export default function WebhooksPage() {
             <X className="h-4 w-4 text-red-500" />
           </button>
         </div>
+      )}
+
+      {atLimit && userProfile && (
+        <Card>
+          <div className="flex items-center gap-3">
+            <AlertCircle className="h-5 w-5 text-amber-500" />
+            <div className="flex-1">
+              <p className="text-sm text-gray-700 dark:text-gray-300">
+                You&apos;ve reached your limit of {userProfile.webhookLimit} server{userProfile.webhookLimit !== 1 ? 's' : ''}.
+                {userProfile.subscriptionTier === "SUBSCRIBER" && (
+                  <span className="ml-1">Upgrade to Premium for up to 25 servers.</span>
+                )}
+              </p>
+            </div>
+          </div>
+        </Card>
       )}
 
       {loading ? (

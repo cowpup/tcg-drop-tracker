@@ -4,6 +4,14 @@ import { prisma } from "@/lib/db";
 
 const SUPER_ADMIN_ID = "user_3AXkPvNHZ8Jc09Csj9IWHKipRF9";
 
+// Webhook limits by subscription tier
+const WEBHOOK_LIMITS: Record<string, number> = {
+  FREE: 0,
+  SUBSCRIBER: 2,
+  PREMIUM: 25,
+};
+const ADMIN_WEBHOOK_LIMIT = 999;
+
 // GET /api/users/me - Get current user's profile
 export async function GET() {
   try {
@@ -75,16 +83,25 @@ export async function GET() {
       user.subscriptionTier !== "FREE" &&
       (!user.subscriptionExpiresAt || new Date(user.subscriptionExpiresAt) > new Date());
 
+    const isAdmin = user.role === "ADMIN" || user.role === "SUPER_ADMIN";
+    const canCreateWebhooks = isSubscriptionActive || isAdmin;
+
+    // Get webhook usage
+    const webhookCount = await prisma.discordWebhook.count({
+      where: { clerkUserId: userId },
+    });
+    const webhookLimit = isAdmin ? ADMIN_WEBHOOK_LIMIT : WEBHOOK_LIMITS[user.subscriptionTier] || 0;
+
     return NextResponse.json({
       data: {
         ...user,
         isSubscriptionActive,
-        canCreateWebhooks:
-          isSubscriptionActive ||
-          user.role === "ADMIN" ||
-          user.role === "SUPER_ADMIN",
-        isAdmin: user.role === "ADMIN" || user.role === "SUPER_ADMIN",
+        canCreateWebhooks,
+        isAdmin,
         isSuperAdmin: user.role === "SUPER_ADMIN",
+        webhookCount,
+        webhookLimit,
+        canAddMoreWebhooks: canCreateWebhooks && webhookCount < webhookLimit,
       },
     });
   } catch (error) {

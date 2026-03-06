@@ -10,6 +10,16 @@ function isValidDiscordWebhook(url: string): boolean {
   return discordWebhookRegex.test(url);
 }
 
+// Webhook limits by subscription tier
+const WEBHOOK_LIMITS: Record<string, number> = {
+  FREE: 0,
+  SUBSCRIBER: 2,
+  PREMIUM: 25,
+};
+
+// Admins get unlimited webhooks
+const ADMIN_WEBHOOK_LIMIT = 999;
+
 // GET /api/webhooks/discord - List user's webhooks
 export async function GET() {
   try {
@@ -77,6 +87,28 @@ export async function POST(request: NextRequest) {
       if (user.subscriptionExpiresAt && new Date(user.subscriptionExpiresAt) < new Date()) {
         return NextResponse.json(
           { error: "Your subscription has expired. Please renew to create webhooks." },
+          { status: 403 }
+        );
+      }
+
+      // Check webhook limit
+      const isAdmin = user.role === "ADMIN" || user.role === "SUPER_ADMIN";
+      const limit = isAdmin ? ADMIN_WEBHOOK_LIMIT : WEBHOOK_LIMITS[user.subscriptionTier] || 0;
+
+      const currentCount = await prisma.discordWebhook.count({
+        where: { clerkUserId: userId },
+      });
+
+      if (currentCount >= limit) {
+        const tierName = user.subscriptionTier === "SUBSCRIBER" ? "Subscriber" : "Premium";
+        return NextResponse.json(
+          {
+            error: `You've reached your limit of ${limit} server${limit !== 1 ? 's' : ''}. ${
+              user.subscriptionTier === "SUBSCRIBER"
+                ? "Upgrade to Premium for up to 25 servers."
+                : "Contact support to increase your limit."
+            }`
+          },
           { status: 403 }
         );
       }
