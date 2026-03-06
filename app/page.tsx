@@ -75,7 +75,7 @@ export default function Home() {
           </div>
 
           <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight mb-6">
-            <span className="text-[var(--foreground)]">Track the </span>
+            <span className="text-[var(--foreground)]">Track with </span>
             <span className="text-gradient">drip.</span>
             <br />
             <span className="text-[var(--foreground)]">Catch the </span>
