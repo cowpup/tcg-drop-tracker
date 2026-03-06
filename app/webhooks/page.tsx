@@ -254,7 +254,7 @@ export default function WebhooksPage() {
               Alert Your Community
             </h2>
             <p className="mt-2 text-gray-500 dark:text-gray-400 max-w-lg mx-auto">
-              Run a Discord server? Subscribers can connect their server to receive automatic drop alerts. Keep your community informed the moment restocks and new releases go live.
+              Run a Discord server? Subscribers can connect their server to receive automatic alerts for drops, restocks, queue activations, and security changes. Know before everyone else when products are about to go live.
             </p>
           </div>
         </Card>
@@ -297,6 +297,34 @@ export default function WebhooksPage() {
                 <h3 className="font-medium text-gray-900 dark:text-white">Multiple Channels</h3>
                 <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                   Set up different alerts for different channels or servers
+                </p>
+              </div>
+            </div>
+          </Card>
+
+          <Card>
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-900">
+                <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+              </div>
+              <div>
+                <h3 className="font-medium text-gray-900 dark:text-white">Queue Detection</h3>
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                  Get alerted when retailers activate queues - a sign drops are about to go live
+                </p>
+              </div>
+            </div>
+          </Card>
+
+          <Card>
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-100 dark:bg-red-900">
+                <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400" />
+              </div>
+              <div>
+                <h3 className="font-medium text-gray-900 dark:text-white">Security Alerts</h3>
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                  Know when retailers enable bot protection - often before high-demand releases
                 </p>
               </div>
             </div>
@@ -543,6 +571,9 @@ export default function WebhooksPage() {
                 setFormData((f) => ({ ...f, signalTypes: values }))
               }
             />
+            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+              Queue Detected &amp; Security Escalated are early warning signals that drops may be imminent
+            </p>
           </div>
 
           <div className="flex justify-end gap-3 pt-4">

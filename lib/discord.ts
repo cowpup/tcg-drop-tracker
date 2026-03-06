@@ -137,7 +137,7 @@ function buildDropEmbed(
     color: COLORS.DROP_ALERT,
     thumbnail: drop.product.imageUrl ? { url: drop.product.imageUrl } : undefined,
     fields,
-    footer: { text: "TCG Drop Tracker" },
+    footer: { text: "Drip Drop Tracker" },
     timestamp: new Date().toISOString(),
   };
 }
@@ -183,7 +183,7 @@ function buildSignalEmbed(
     url: signal.url,
     color,
     fields,
-    footer: { text: "TCG Drop Tracker" },
+    footer: { text: "Drip Drop Tracker" },
     timestamp: signal.detectedAt.toISOString(),
   };
 }
