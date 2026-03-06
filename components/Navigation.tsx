@@ -16,13 +16,53 @@ const navLinks = [
   { href: "/", label: "Drops" },
   { href: "/calendar", label: "Calendar" },
   { href: "/shows", label: "Trade Shows" },
-  { href: "/retailers", label: "Retailers" },
+  { href: "/retailers", label: "Retailer Radar" },
 ];
 
 const authLinks = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/webhooks", label: "Server Alerts" },
 ];
+
+// Water droplet logo SVG
+function DripLogo({ className = "" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 32 32"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={className}
+    >
+      <defs>
+        <linearGradient id="dropGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#00d4ff" />
+          <stop offset="50%" stopColor="#0077b6" />
+          <stop offset="100%" stopColor="#7b2cbf" />
+        </linearGradient>
+        <linearGradient id="shineGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="rgba(255,255,255,0.6)" />
+          <stop offset="100%" stopColor="rgba(255,255,255,0)" />
+        </linearGradient>
+      </defs>
+      {/* Main droplet */}
+      <path
+        d="M16 2C16 2 6 14 6 20C6 25.5228 10.4772 30 16 30C21.5228 30 26 25.5228 26 20C26 14 16 2 16 2Z"
+        fill="url(#dropGradient)"
+      />
+      {/* Shine highlight */}
+      <ellipse
+        cx="12"
+        cy="18"
+        rx="3"
+        ry="4"
+        fill="url(#shineGradient)"
+        opacity="0.6"
+      />
+      {/* Small shine dot */}
+      <circle cx="11" cy="16" r="1.5" fill="white" opacity="0.8" />
+    </svg>
+  );
+}
 
 export function Navigation() {
   const pathname = usePathname();
@@ -51,69 +91,69 @@ export function Navigation() {
     return pathname.startsWith(href);
   };
 
+  const NavLink = ({ href, label }: { href: string; label: string }) => (
+    <Link
+      href={href}
+      className={`
+        relative px-3 py-2 text-sm font-medium transition-all duration-200
+        ${
+          isActive(href)
+            ? "text-[var(--drip-cyan)]"
+            : "text-[var(--foreground-muted)] hover:text-[var(--foreground)]"
+        }
+      `}
+    >
+      {label}
+      {isActive(href) && (
+        <span
+          className="absolute inset-x-1 -bottom-px h-px"
+          style={{
+            background: "linear-gradient(90deg, transparent, var(--drip-cyan), transparent)",
+          }}
+        />
+      )}
+    </Link>
+  );
+
   const AuthLinks = () => (
     <>
       {authLinks.map((link) => (
-        <Link
-          key={link.href}
-          href={link.href}
-          className={`
-            rounded-md px-3 py-2 text-sm font-medium transition-colors
-            ${
-              isActive(link.href)
-                ? "bg-blue-50 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400"
-                : "text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
-            }
-          `}
-        >
-          {link.label}
-        </Link>
+        <NavLink key={link.href} href={link.href} label={link.label} />
       ))}
     </>
   );
 
   return (
-    <header className="sticky top-0 z-40 border-b border-gray-200 bg-white/80 backdrop-blur-sm dark:border-gray-800 dark:bg-gray-900/80">
+    <header
+      className="sticky top-0 z-40 border-b border-white/[0.06]"
+      style={{
+        background: "rgba(10, 14, 20, 0.8)",
+        backdropFilter: "blur(12px)",
+        WebkitBackdropFilter: "blur(12px)",
+      }}
+    >
       <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600">
-            <svg
-              className="h-5 w-5 text-white"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-              />
-            </svg>
+        <Link href="/" className="flex items-center gap-2.5 group">
+          <div className="relative">
+            <DripLogo className="h-8 w-8 transition-transform duration-300 group-hover:scale-110" />
+            {/* Glow effect on hover */}
+            <div
+              className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-lg"
+              style={{
+                background: "radial-gradient(circle, rgba(0,212,255,0.4) 0%, transparent 70%)",
+              }}
+            />
           </div>
-          <span className="text-lg font-bold text-gray-900 dark:text-white">
-            TCG Drop Tracker
+          <span className="text-lg font-bold text-gradient">
+            Drip Drop
           </span>
         </Link>
 
         {/* Primary Nav */}
         <div className="hidden items-center gap-1 md:flex">
           {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={`
-                rounded-md px-3 py-2 text-sm font-medium transition-colors
-                ${
-                  isActive(link.href)
-                    ? "bg-blue-50 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400"
-                    : "text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
-                }
-              `}
-            >
-              {link.label}
-            </Link>
+            <NavLink key={link.href} href={link.href} label={link.label} />
           ))}
         </div>
 
@@ -126,11 +166,11 @@ export function Navigation() {
                 <Link
                   href="/admin"
                   className={`
-                    flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition-colors
+                    flex items-center gap-1.5 px-3 py-2 text-sm font-medium transition-all duration-200
                     ${
                       isActive("/admin")
-                        ? "bg-amber-50 text-amber-600 dark:bg-amber-900/50 dark:text-amber-400"
-                        : "text-amber-600 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-900/30"
+                        ? "text-amber-400"
+                        : "text-amber-400/70 hover:text-amber-400"
                     }
                   `}
                 >
@@ -142,7 +182,7 @@ export function Navigation() {
             <UserButton
               appearance={{
                 elements: {
-                  avatarBox: "h-8 w-8",
+                  avatarBox: "h-8 w-8 ring-2 ring-white/10 ring-offset-2 ring-offset-[var(--background)]",
                 },
               }}
             />
@@ -150,7 +190,7 @@ export function Navigation() {
 
           <Show when="signed-out">
             <SignInButton mode="modal">
-              <Button variant="outline" size="sm">
+              <Button variant="primary" size="sm">
                 Sign In
               </Button>
             </SignInButton>
@@ -159,17 +199,17 @@ export function Navigation() {
       </nav>
 
       {/* Mobile Nav */}
-      <div className="flex gap-1 overflow-x-auto border-t border-gray-200 px-4 py-2 md:hidden dark:border-gray-800">
+      <div className="flex gap-1 overflow-x-auto border-t border-white/[0.06] px-4 py-2 md:hidden">
         {navLinks.map((link) => (
           <Link
             key={link.href}
             href={link.href}
             className={`
-              whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-colors
+              whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium transition-all duration-200
               ${
                 isActive(link.href)
-                  ? "bg-blue-50 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400"
-                  : "text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+                  ? "bg-[var(--drip-cyan)]/10 text-[var(--drip-cyan)]"
+                  : "text-[var(--foreground-muted)] hover:bg-white/5 hover:text-[var(--foreground)]"
               }
             `}
           >
@@ -182,11 +222,11 @@ export function Navigation() {
               key={link.href}
               href={link.href}
               className={`
-                whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-colors
+                whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium transition-all duration-200
                 ${
                   isActive(link.href)
-                    ? "bg-blue-50 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400"
-                    : "text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+                    ? "bg-[var(--drip-cyan)]/10 text-[var(--drip-cyan)]"
+                    : "text-[var(--foreground-muted)] hover:bg-white/5 hover:text-[var(--foreground)]"
                 }
               `}
             >
@@ -197,11 +237,11 @@ export function Navigation() {
             <Link
               href="/admin"
               className={`
-                flex items-center gap-1 whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-colors
+                flex items-center gap-1 whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium transition-all duration-200
                 ${
                   isActive("/admin")
-                    ? "bg-amber-50 text-amber-600 dark:bg-amber-900/50 dark:text-amber-400"
-                    : "text-amber-600 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-900/30"
+                    ? "bg-amber-400/10 text-amber-400"
+                    : "text-amber-400/70 hover:bg-amber-400/10 hover:text-amber-400"
                 }
               `}
             >

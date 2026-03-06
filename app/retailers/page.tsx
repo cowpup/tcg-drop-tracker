@@ -71,10 +71,10 @@ export default function RetailersPage() {
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Retailer Status
+            Retailer Radar
           </h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Live monitoring of retailer security status and queue detection
+            Live queue and security detection across major retailers
           </p>
         </div>
         <button
@@ -202,25 +202,6 @@ export default function RetailersPage() {
           </p>
         </Card>
       )}
-
-      {/* Info Notice */}
-      <Card className="border-blue-200 bg-blue-50 dark:border-blue-900 dark:bg-blue-900/20">
-        <div className="flex gap-3">
-          <ShieldCheck className="h-5 w-5 flex-shrink-0 text-blue-600 dark:text-blue-400" />
-          <div>
-            <h3 className="font-medium text-blue-800 dark:text-blue-200">
-              About Security Monitoring
-            </h3>
-            <p className="mt-1 text-sm text-blue-700 dark:text-blue-300">
-              We monitor retailer websites every 3 minutes to detect security
-              changes and queue activation. When we detect elevated security
-              (like Cloudflare protection) or a virtual waiting room, it often
-              indicates an upcoming high-demand drop. Enable notifications to
-              get alerted when status changes.
-            </p>
-          </div>
-        </div>
-      </Card>
 
       {/* Last refresh indicator */}
       {lastRefresh && (

@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "TCG Drop Tracker",
+  title: "Drip Drop Tracker",
   description:
     "Track upcoming TCG product drops, restocks, and trade shows for Pokémon, Magic: The Gathering, Yu-Gi-Oh!, and more.",
   keywords: [
@@ -37,19 +37,21 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider>
-      <html lang="en">
+      <html lang="en" className="dark">
         <body
-          className={`${geistSans.variable} ${geistMono.variable} min-h-screen bg-gray-50 antialiased dark:bg-gray-900`}
+          className={`${geistSans.variable} ${geistMono.variable} min-h-screen antialiased`}
+          style={{ background: "var(--background)", color: "var(--foreground)" }}
         >
           <Navigation />
-          <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+          <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
             {children}
           </main>
-          <footer className="border-t border-gray-200 py-8 dark:border-gray-800">
-            <div className="mx-auto max-w-7xl px-4 text-center text-sm text-gray-500 dark:text-gray-400">
-              <p>
-                TCG Drop Tracker — Free community tool for tracking card game
-                releases and events.
+          <footer className="border-t border-white/5 py-8">
+            <div className="mx-auto max-w-7xl px-4 text-center text-sm text-[var(--foreground-muted)]">
+              <p className="flex items-center justify-center gap-2">
+                <span className="text-gradient font-semibold">Drip Drop Tracker</span>
+                <span>—</span>
+                <span>Free community tool for tracking card game releases and events.</span>
               </p>
             </div>
           </footer>

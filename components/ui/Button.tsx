@@ -9,25 +9,53 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
   size?: ButtonSize;
   loading?: boolean;
+  glow?: boolean;
 }
 
 const variantStyles: Record<ButtonVariant, string> = {
-  primary:
-    "bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500",
-  secondary:
-    "bg-gray-600 text-white hover:bg-gray-700 focus:ring-gray-500",
-  outline:
-    "border border-gray-300 bg-transparent text-gray-700 hover:bg-gray-50 focus:ring-gray-500 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800",
-  ghost:
-    "bg-transparent text-gray-700 hover:bg-gray-100 focus:ring-gray-500 dark:text-gray-200 dark:hover:bg-gray-800",
-  danger:
-    "bg-red-600 text-white hover:bg-red-700 focus:ring-red-500",
+  primary: `
+    bg-gradient-to-r from-[var(--drip-cyan)] via-[var(--drip-teal)] to-[var(--drip-blue)]
+    text-white font-semibold
+    shadow-[0_0_20px_rgba(0,212,255,0.3)]
+    hover:shadow-[0_0_30px_rgba(0,212,255,0.5)]
+    hover:brightness-110
+    active:scale-[0.98]
+  `,
+  secondary: `
+    bg-[var(--background-elevated)]
+    text-[var(--foreground)]
+    border border-white/10
+    hover:border-[var(--drip-cyan)]/30
+    hover:bg-[var(--background-secondary)]
+  `,
+  outline: `
+    bg-transparent
+    text-[var(--foreground)]
+    border border-white/10
+    hover:border-[var(--drip-cyan)]/50
+    hover:bg-[var(--drip-cyan)]/5
+    hover:text-[var(--drip-cyan)]
+  `,
+  ghost: `
+    bg-transparent
+    text-[var(--foreground-muted)]
+    hover:text-[var(--foreground)]
+    hover:bg-white/5
+  `,
+  danger: `
+    bg-gradient-to-r from-red-600 to-red-500
+    text-white font-semibold
+    shadow-[0_0_20px_rgba(239,68,68,0.3)]
+    hover:shadow-[0_0_30px_rgba(239,68,68,0.5)]
+    hover:brightness-110
+    active:scale-[0.98]
+  `,
 };
 
 const sizeStyles: Record<ButtonSize, string> = {
-  sm: "px-3 py-1.5 text-sm",
-  md: "px-4 py-2 text-sm",
-  lg: "px-6 py-3 text-base",
+  sm: "px-3 py-1.5 text-sm gap-1.5",
+  md: "px-4 py-2 text-sm gap-2",
+  lg: "px-6 py-3 text-base gap-2",
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
@@ -37,6 +65,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       variant = "primary",
       size = "md",
       loading = false,
+      glow = false,
       disabled,
       children,
       ...props
@@ -47,11 +76,14 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       <button
         ref={ref}
         className={`
-          inline-flex items-center justify-center gap-2 rounded-md font-medium
-          transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2
-          disabled:cursor-not-allowed disabled:opacity-50
+          relative inline-flex items-center justify-center
+          rounded-lg font-medium
+          transition-all duration-200 ease-out
+          disabled:cursor-not-allowed disabled:opacity-40
+          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--drip-cyan)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background)]
           ${variantStyles[variant]}
           ${sizeStyles[size]}
+          ${glow ? "animate-[pulse-glow_2s_ease-in-out_infinite]" : ""}
           ${className}
         `}
         disabled={disabled || loading}
