@@ -2,109 +2,114 @@
 
 import Link from "next/link";
 import { DropFeed } from "@/components/drops";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Zap, Radio, Calendar } from "lucide-react";
 
 export default function Home() {
   return (
-    <div>
-      {/* Hero - Clean but bold */}
-      <section className="py-16 sm:py-24">
-        <div className="max-w-3xl">
-          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black leading-[1.1] tracking-tight">
-            <span className="text-[var(--foreground)]">Track with </span>
-            <span className="text-gradient">drip.</span>
+    <div className="space-y-24">
+      {/* Hero */}
+      <section className="pt-12 sm:pt-20">
+        <div className="max-w-2xl">
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[var(--drip-cyan)]/10 border border-[var(--drip-cyan)]/20 mb-6">
+            <span className="w-2 h-2 rounded-full bg-[var(--drip-cyan)] animate-pulse" />
+            <span className="text-sm font-medium text-[var(--drip-cyan)]">Monitoring 75+ products 24/7</span>
+          </div>
+
+          {/* Headline */}
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight tracking-tight text-[var(--foreground)]">
+            Track with drip.
             <br />
-            <span className="text-[var(--foreground)]">Catch the </span>
-            <span className="text-gradient">drop.</span>
+            <span className="text-[var(--drip-cyan)]">Catch the drop.</span>
           </h1>
 
-          <p className="mt-6 text-xl text-[var(--foreground-muted)] max-w-xl">
-            Real-time alerts for Pokémon, Magic, Yu-Gi-Oh!, and every TCG drop that matters.
-            We watch the queues so you don't have to.
+          {/* Subhead */}
+          <p className="mt-6 text-lg text-[var(--foreground-muted)] leading-relaxed">
+            Real-time restock alerts for Pokémon, Magic, Yu-Gi-Oh!, and more.
+            We detect queues before drops go live.
           </p>
 
-          <div className="mt-8 flex flex-wrap items-center gap-6">
+          {/* CTA */}
+          <div className="mt-8 flex flex-wrap items-center gap-4">
             <Link
               href="/dashboard"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-semibold text-white transition-all hover:scale-105"
-              style={{
-                background: "linear-gradient(135deg, var(--drip-cyan) 0%, var(--drip-blue) 100%)",
-                boxShadow: "0 0 30px rgba(0,212,255,0.3)",
-              }}
+              className="inline-flex items-center gap-2 px-5 py-3 rounded-lg font-semibold text-[var(--background)] bg-[var(--drip-cyan)] hover:brightness-110 transition-all"
             >
               Get Started
               <ArrowRight className="w-4 h-4" />
             </Link>
-
             <Link
-              href="/shows"
-              className="text-[var(--foreground-muted)] hover:text-[var(--drip-cyan)] transition-colors"
+              href="/retailers"
+              className="inline-flex items-center gap-2 px-5 py-3 rounded-lg font-medium text-[var(--foreground-muted)] hover:text-[var(--foreground)] transition-colors"
             >
-              Find trade shows →
+              <Radio className="w-4 h-4" />
+              View live status
             </Link>
           </div>
         </div>
       </section>
 
-      {/* Quick links */}
-      <section className="py-12 border-t border-white/5">
-        <div className="grid sm:grid-cols-3 gap-8">
-          <Link href="/calendar" className="group">
-            <h3 className="text-lg font-semibold text-[var(--foreground)] group-hover:text-[var(--drip-cyan)] transition-colors">
-              Calendar
-            </h3>
-            <p className="text-sm text-[var(--foreground-muted)] mt-1">
-              Every drop at a glance
-            </p>
-          </Link>
+      {/* Features - 3 column */}
+      <section className="grid sm:grid-cols-3 gap-8">
+        <div className="space-y-3">
+          <div className="w-10 h-10 rounded-lg bg-[var(--drip-cyan)]/10 flex items-center justify-center">
+            <Zap className="w-5 h-5 text-[var(--drip-cyan)]" />
+          </div>
+          <h3 className="text-lg font-semibold text-[var(--foreground)]">Queue Detection</h3>
+          <p className="text-sm text-[var(--foreground-muted)] leading-relaxed">
+            We monitor retailers every 3 minutes. When queues activate, you know before the crowd.
+          </p>
+        </div>
 
-          <Link href="/shows" className="group">
-            <h3 className="text-lg font-semibold text-[var(--foreground)] group-hover:text-[var(--drip-cyan)] transition-colors">
-              Trade Shows
-            </h3>
-            <p className="text-sm text-[var(--foreground-muted)] mt-1">
-              Events happening near you
-            </p>
-          </Link>
+        <div className="space-y-3">
+          <div className="w-10 h-10 rounded-lg bg-[var(--drip-cyan)]/10 flex items-center justify-center">
+            <Calendar className="w-5 h-5 text-[var(--drip-cyan)]" />
+          </div>
+          <h3 className="text-lg font-semibold text-[var(--foreground)]">Drop Calendar</h3>
+          <p className="text-sm text-[var(--foreground-muted)] leading-relaxed">
+            Every upcoming release in one place. Filter by game, retailer, or date.
+          </p>
+        </div>
 
-          <Link href="/retailers" className="group">
-            <h3 className="text-lg font-semibold text-[var(--foreground)] group-hover:text-[var(--drip-cyan)] transition-colors">
-              Retailer Radar
-            </h3>
-            <p className="text-sm text-[var(--foreground-muted)] mt-1">
-              Live queue detection
-            </p>
-          </Link>
+        <div className="space-y-3">
+          <div className="w-10 h-10 rounded-lg bg-[var(--drip-cyan)]/10 flex items-center justify-center">
+            <Radio className="w-5 h-5 text-[var(--drip-cyan)]" />
+          </div>
+          <h3 className="text-lg font-semibold text-[var(--foreground)]">Discord Alerts</h3>
+          <p className="text-sm text-[var(--foreground-muted)] leading-relaxed">
+            Connect your server. Get instant alerts when products drop or queues go live.
+          </p>
         </div>
       </section>
 
       {/* Drops */}
-      <section className="py-12">
-        <div className="flex items-baseline justify-between mb-8">
-          <h2 className="text-3xl font-bold text-[var(--foreground)]">
-            Upcoming Drops
-          </h2>
+      <section>
+        <div className="flex items-center justify-between mb-8">
+          <h2 className="text-2xl font-bold text-[var(--foreground)]">Upcoming Drops</h2>
           <Link
             href="/calendar"
-            className="text-sm text-[var(--foreground-muted)] hover:text-[var(--drip-cyan)] transition-colors"
+            className="text-sm font-medium text-[var(--drip-cyan)] hover:underline"
           >
-            View all →
+            View calendar →
           </Link>
         </div>
-
         <DropFeed />
       </section>
 
       {/* Bottom CTA */}
-      <section className="py-16 border-t border-white/5 text-center">
-        <p className="text-[var(--foreground-muted)] mb-3">
+      <section className="text-center py-12 border-t border-white/5">
+        <h3 className="text-2xl font-bold text-[var(--foreground)] mb-3">
           Run a Discord server?
+        </h3>
+        <p className="text-[var(--foreground-muted)] mb-6">
+          Set up automated alerts for your community in minutes.
         </p>
         <Link
           href="/webhooks"
-          className="text-2xl font-bold text-[var(--foreground)] hover:text-[var(--drip-cyan)] transition-colors"
+          className="inline-flex items-center gap-2 px-5 py-3 rounded-lg font-semibold text-[var(--background)] bg-[var(--drip-cyan)] hover:brightness-110 transition-all"
         >
-          Set up alerts for your community →
+          Set up alerts
+          <ArrowRight className="w-4 h-4" />
         </Link>
       </section>
     </div>
