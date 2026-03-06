@@ -18,6 +18,7 @@ interface UseDropsOptions {
   dropType?: string;
   status?: string;
   upcoming?: boolean;
+  past?: boolean;
   page?: number;
   limit?: number;
 }
@@ -57,6 +58,7 @@ export function useDrops(options: UseDropsOptions = {}): UseDropsResult {
       if (options.dropType) params.set("dropType", options.dropType);
       if (options.status) params.set("status", options.status);
       if (options.upcoming) params.set("upcoming", "true");
+      if (options.past) params.set("past", "true");
       if (options.page) params.set("page", String(options.page));
       if (options.limit) params.set("limit", String(options.limit));
 
@@ -80,6 +82,7 @@ export function useDrops(options: UseDropsOptions = {}): UseDropsResult {
     options.dropType,
     options.status,
     options.upcoming,
+    options.past,
     options.page,
     options.limit,
   ]);

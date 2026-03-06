@@ -47,7 +47,9 @@ interface Drop {
 export default function CalendarPage() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDrop, setSelectedDrop] = useState<Drop | null>(null);
+  const [showPastDrops, setShowPastDrops] = useState(false);
   const { drops, loading } = useDrops({ upcoming: true, limit: 100 });
+  const { drops: pastDrops, loading: pastLoading } = useDrops({ past: true, limit: 50 });
 
   const calendarDays = useMemo(() => {
     const start = startOfMonth(currentMonth);
@@ -215,6 +217,97 @@ export default function CalendarPage() {
             </div>
           ))}
         </div>
+      </Card>
+
+      {/* Past Drops History */}
+      <Card>
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              Drop History
+            </h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Past drops to identify restock patterns and trends
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowPastDrops(!showPastDrops)}
+          >
+            {showPastDrops ? "Hide History" : "Show History"}
+          </Button>
+        </div>
+
+        {showPastDrops && (
+          <div className="space-y-3">
+            {pastLoading ? (
+              <div className="flex justify-center py-4">
+                <LoadingSpinner />
+              </div>
+            ) : pastDrops.length === 0 ? (
+              <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
+                No past drops recorded yet
+              </p>
+            ) : (
+              <>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-gray-200 dark:border-gray-700">
+                        <th className="pb-2 text-left font-medium text-gray-500">Date</th>
+                        <th className="pb-2 text-left font-medium text-gray-500">Product</th>
+                        <th className="pb-2 text-left font-medium text-gray-500">Retailer</th>
+                        <th className="pb-2 text-left font-medium text-gray-500">Type</th>
+                        <th className="pb-2 text-left font-medium text-gray-500">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {pastDrops.map((drop) => (
+                        <tr
+                          key={drop.id}
+                          className="border-b border-gray-100 dark:border-gray-800 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800"
+                          onClick={() => setSelectedDrop(drop)}
+                        >
+                          <td className="py-2 text-gray-600 dark:text-gray-400">
+                            {drop.scheduledAt
+                              ? format(new Date(drop.scheduledAt), "MMM d, yyyy")
+                              : "-"}
+                          </td>
+                          <td className="py-2">
+                            <div className="flex items-center gap-2">
+                              <div className={`h-2 w-2 rounded-full ${gameColors[drop.product.game] || "bg-gray-400"}`} />
+                              <span className="text-gray-900 dark:text-white">{drop.product.name}</span>
+                            </div>
+                          </td>
+                          <td className="py-2">
+                            <Badge variant="default" size="sm">
+                              {RetailerLabels[drop.retailer] || drop.retailer}
+                            </Badge>
+                          </td>
+                          <td className="py-2 text-gray-600 dark:text-gray-400">
+                            {DropTypeLabels[drop.dropType] || drop.dropType}
+                          </td>
+                          <td className="py-2">
+                            <Badge
+                              variant={drop.status === "SOLD_OUT" ? "warning" : drop.status === "CANCELLED" ? "danger" : "default"}
+                              size="sm"
+                            >
+                              {drop.status}
+                            </Badge>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
+                  Click any row for details. Showing last {pastDrops.length} drops.
+                </p>
+              </>
+            )}
+          </div>
+        )}
       </Card>
 
       {/* Drop Detail Modal */}

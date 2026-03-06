@@ -17,6 +17,7 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get("status") as DropStatus | null;
     const productId = searchParams.get("productId");
     const upcoming = searchParams.get("upcoming") === "true";
+    const past = searchParams.get("past") === "true";
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "20");
     const skip = (page - 1) * limit;
@@ -30,6 +31,12 @@ export async function GET(request: NextRequest) {
       ...(upcoming && {
         scheduledAt: { gte: new Date() },
         status: { in: [DropStatus.UPCOMING, DropStatus.LIVE, DropStatus.QUEUE_ACTIVE] },
+      }),
+      ...(past && {
+        OR: [
+          { scheduledAt: { lt: new Date() } },
+          { status: { in: [DropStatus.SOLD_OUT, DropStatus.CANCELLED] } },
+        ],
       }),
     };
 
