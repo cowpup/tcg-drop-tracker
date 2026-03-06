@@ -146,7 +146,7 @@ export function Navigation() {
             />
           </div>
           <span className="text-lg font-bold text-gradient">
-            Drip Drop
+            Drip Drop Tracker
           </span>
         </Link>
 

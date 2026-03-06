@@ -4,29 +4,6 @@ import Link from "next/link";
 import { DropFeed } from "@/components/drops";
 import { Calendar, MapPin, Bell, Sparkles, Zap } from "lucide-react";
 
-// Animated blob background
-function FloatingBlobs() {
-  return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {/* Large cyan blob - top right */}
-      <div
-        className="absolute -top-32 -right-32 w-96 h-96 rounded-full opacity-20 blur-3xl animate-[float_8s_ease-in-out_infinite]"
-        style={{ background: "radial-gradient(circle, var(--drip-cyan) 0%, transparent 70%)" }}
-      />
-      {/* Purple blob - bottom left */}
-      <div
-        className="absolute -bottom-48 -left-24 w-80 h-80 rounded-full opacity-15 blur-3xl animate-[float_10s_ease-in-out_infinite_reverse]"
-        style={{ background: "radial-gradient(circle, var(--drip-purple) 0%, transparent 70%)" }}
-      />
-      {/* Small accent blob */}
-      <div
-        className="absolute top-1/3 left-1/4 w-32 h-32 rounded-full opacity-10 blur-2xl animate-[float_6s_ease-in-out_infinite]"
-        style={{ background: "radial-gradient(circle, var(--drip-pink) 0%, transparent 70%)" }}
-      />
-    </div>
-  );
-}
-
 // Tilted feature card
 function FeatureCard({
   href,
@@ -87,7 +64,6 @@ function FeatureCard({
 export default function Home() {
   return (
     <div className="relative space-y-16">
-      <FloatingBlobs />
 
       {/* Hero Section - Asymmetric and bold */}
       <section className="relative pt-8 pb-12">
@@ -169,19 +145,6 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Floating stats - positioned asymmetrically */}
-        <div className="absolute top-16 right-0 hidden lg:block">
-          <div
-            className="
-              px-5 py-3 rounded-2xl rotate-3
-              bg-white/[0.03] border border-white/[0.08]
-              backdrop-blur-sm
-            "
-          >
-            <div className="text-3xl font-bold text-gradient">75+</div>
-            <div className="text-sm text-[var(--foreground-muted)]">Products tracked</div>
-          </div>
-        </div>
       </section>
 
       {/* Feature Cards - Tilted grid */}
