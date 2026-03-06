@@ -317,7 +317,7 @@ export default function WebhooksPage() {
     );
   }
 
-  const atLimit = userProfile && userProfile.webhookCount >= userProfile.webhookLimit;
+  const atLimit = userProfile ? userProfile.webhookCount >= userProfile.webhookLimit : false;
 
   return (
     <div className="space-y-6">

@@ -11,6 +11,14 @@ interface ShowMapProps {
   shows: TradeShow[];
 }
 
+// Time proximity filters
+const TIME_FILTERS = [
+  { id: "all", label: "All", color: null },
+  { id: "week", label: "This Week", color: "#ef4444" },
+  { id: "month", label: "This Month", color: "#f59e0b" },
+  { id: "later", label: "30+ Days", color: "#22c55e" },
+];
+
 // Game types for filtering
 const GAME_FILTERS = [
   { id: "all", label: "All Shows" },
@@ -35,6 +43,7 @@ export function ShowMap({ shows }: ShowMapProps) {
   const map = useRef<mapboxgl.Map | null>(null);
   const markersRef = useRef<mapboxgl.Marker[]>([]);
   const [selectedGame, setSelectedGame] = useState("all");
+  const [selectedTime, setSelectedTime] = useState("all");
   const mapboxToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 
   // Filter shows with coordinates
@@ -43,16 +52,34 @@ export function ShowMap({ shows }: ShowMapProps) {
     [shows]
   );
 
-  // Filter by selected game type
-  const filteredShows = useMemo(() => {
-    if (selectedGame === "all") return mappableShows;
+  // Get proximity category for a show
+  const getTimeCategory = (show: TradeShow) => {
+    const daysUntil = differenceInDays(new Date(show.startDate), new Date());
+    if (daysUntil < 7) return "week";
+    if (daysUntil < 30) return "month";
+    return "later";
+  };
 
-    const keywords = GAME_KEYWORDS[selectedGame] || [];
-    return mappableShows.filter((show) => {
-      const searchText = `${show.name} ${show.description || ""} ${show.showType}`.toLowerCase();
-      return keywords.some((kw) => searchText.includes(kw));
-    });
-  }, [mappableShows, selectedGame]);
+  // Filter by selected game type and time
+  const filteredShows = useMemo(() => {
+    let filtered = mappableShows;
+
+    // Filter by time
+    if (selectedTime !== "all") {
+      filtered = filtered.filter((show) => getTimeCategory(show) === selectedTime);
+    }
+
+    // Filter by game
+    if (selectedGame !== "all") {
+      const keywords = GAME_KEYWORDS[selectedGame] || [];
+      filtered = filtered.filter((show) => {
+        const searchText = `${show.name} ${show.description || ""} ${show.showType}`.toLowerCase();
+        return keywords.some((kw) => searchText.includes(kw));
+      });
+    }
+
+    return filtered;
+  }, [mappableShows, selectedGame, selectedTime]);
 
   const getProximityInfo = (show: TradeShow) => {
     const daysUntil = differenceInDays(new Date(show.startDate), new Date());
@@ -192,22 +219,50 @@ export function ShowMap({ shows }: ShowMapProps) {
   return (
     <div className="space-y-4">
       {/* Filter Bar */}
-      <div className="flex flex-wrap items-center gap-2">
-        <Filter className="h-4 w-4 text-gray-500" />
-        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Filter:</span>
-        {GAME_FILTERS.map((filter) => (
-          <button
-            key={filter.id}
-            onClick={() => setSelectedGame(filter.id)}
-            className={`rounded-full px-3 py-1 text-sm font-medium transition-colors ${
-              selectedGame === filter.id
-                ? "bg-blue-600 text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
-            }`}
-          >
-            {filter.label}
-          </button>
-        ))}
+      <div className="flex flex-wrap items-center gap-4">
+        {/* Time Filter */}
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">When:</span>
+          {TIME_FILTERS.map((filter) => (
+            <button
+              key={filter.id}
+              onClick={() => setSelectedTime(filter.id)}
+              className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium transition-colors ${
+                selectedTime === filter.id
+                  ? "bg-gray-900 text-white dark:bg-white dark:text-gray-900"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+              }`}
+            >
+              {filter.color && (
+                <span
+                  className="h-2.5 w-2.5 rounded-full"
+                  style={{ backgroundColor: filter.color }}
+                />
+              )}
+              {filter.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="h-4 w-px bg-gray-300 dark:bg-gray-600" />
+
+        {/* Game Filter */}
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Type:</span>
+          {GAME_FILTERS.map((filter) => (
+            <button
+              key={filter.id}
+              onClick={() => setSelectedGame(filter.id)}
+              className={`rounded-full px-3 py-1 text-sm font-medium transition-colors ${
+                selectedGame === filter.id
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+              }`}
+            >
+              {filter.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Interactive Map */}
