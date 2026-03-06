@@ -220,10 +220,10 @@ export default function WebhooksPage() {
       <div className="flex flex-col items-center justify-center py-12">
         <Webhook className="h-12 w-12 text-gray-400" />
         <h1 className="mt-4 text-2xl font-bold text-gray-900 dark:text-white">
-          Sign in to set up alerts
+          Server Alerts
         </h1>
-        <p className="mt-2 text-gray-500 dark:text-gray-400">
-          Create an account to get notified about drops
+        <p className="mt-2 text-gray-500 dark:text-gray-400 text-center max-w-md">
+          Sign in to set up drop alerts for your Discord server or community
         </p>
       </div>
     );
@@ -235,23 +235,23 @@ export default function WebhooksPage() {
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Discord Alerts
+            Server Alerts
           </h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Get notified instantly when drops go live
+            Set up drop alerts for your Discord server or community
           </p>
         </div>
 
         <Card>
           <div className="text-center py-6">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-600">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-600">
               <Webhook className="h-8 w-8 text-white" />
             </div>
             <h2 className="mt-4 text-xl font-bold text-gray-900 dark:text-white">
-              Unlock Discord Alerts
+              Alert Your Community
             </h2>
-            <p className="mt-2 text-gray-500 dark:text-gray-400 max-w-md mx-auto">
-              Subscribers get instant Discord notifications the moment drops go live. Never miss a restock again.
+            <p className="mt-2 text-gray-500 dark:text-gray-400 max-w-lg mx-auto">
+              Run a Discord server? Subscribers can connect their server to receive automatic drop alerts. Keep your community informed the moment restocks and new releases go live.
             </p>
           </div>
         </Card>
@@ -263,9 +263,9 @@ export default function WebhooksPage() {
                 <Check className="h-5 w-5 text-green-600 dark:text-green-400" />
               </div>
               <div>
-                <h3 className="font-medium text-gray-900 dark:text-white">Instant Alerts</h3>
+                <h3 className="font-medium text-gray-900 dark:text-white">Automatic Posts</h3>
                 <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                  Get pinged in Discord within seconds of a drop going live
+                  Alerts post to your channel automatically - no manual updates needed
                 </p>
               </div>
             </div>
@@ -277,9 +277,9 @@ export default function WebhooksPage() {
                 <Check className="h-5 w-5 text-blue-600 dark:text-blue-400" />
               </div>
               <div>
-                <h3 className="font-medium text-gray-900 dark:text-white">Custom Filters</h3>
+                <h3 className="font-medium text-gray-900 dark:text-white">Filter by Game</h3>
                 <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                  Only get alerts for games and retailers you care about
+                  Only receive alerts for Pokemon, MTG, sports cards, or specific retailers
                 </p>
               </div>
             </div>
@@ -291,9 +291,9 @@ export default function WebhooksPage() {
                 <Check className="h-5 w-5 text-purple-600 dark:text-purple-400" />
               </div>
               <div>
-                <h3 className="font-medium text-gray-900 dark:text-white">Multiple Servers</h3>
+                <h3 className="font-medium text-gray-900 dark:text-white">Multiple Channels</h3>
                 <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                  Connect multiple Discord servers with different alert settings
+                  Set up different alerts for different channels or servers
                 </p>
               </div>
             </div>
@@ -319,15 +319,15 @@ export default function WebhooksPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Discord Alerts
+            Server Alerts
           </h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Get notified instantly when drops go live
+            Send drop alerts to your Discord server
           </p>
         </div>
         <Button onClick={openCreateModal}>
           <Plus className="h-4 w-4" />
-          Add Alert
+          Add Server
         </Button>
       </div>
 
@@ -350,14 +350,14 @@ export default function WebhooksPage() {
           <div className="flex flex-col items-center justify-center py-8 text-center">
             <Webhook className="h-10 w-10 text-gray-400" />
             <h3 className="mt-3 text-lg font-medium text-gray-900 dark:text-white">
-              No webhooks configured
+              No servers connected
             </h3>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Add a Discord webhook to start receiving alerts
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400 max-w-sm">
+              Connect your Discord server to automatically post drop alerts to your community
             </p>
             <Button onClick={openCreateModal} className="mt-4">
               <Plus className="h-4 w-4" />
-              Add Your First Alert
+              Connect Your Server
             </Button>
           </div>
         </Card>

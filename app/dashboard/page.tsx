@@ -212,20 +212,20 @@ export default function DashboardPage() {
             />
           </Card>
 
-          {/* Discord Alerts Link */}
+          {/* Server Alerts Link */}
           <Card>
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="font-medium text-gray-900 dark:text-white">
-                  Discord Alerts
+                  Server Alerts
                 </h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Get instant notifications in your Discord server
+                  Run a Discord server? Set up automatic drop alerts for your community
                 </p>
               </div>
               <Link href="/webhooks">
                 <Button variant="outline" size="sm">
-                  Set Up Alerts
+                  Set Up
                 </Button>
               </Link>
             </div>
