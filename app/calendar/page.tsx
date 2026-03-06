@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { useDrops } from "@/hooks";
+import { useDrops, useShows } from "@/hooks";
 import { Card, Badge, LoadingSpinner, Button, Modal } from "@/components/ui";
-import { GameLabels, RetailerLabels, DropTypeLabels } from "@/types";
+import { GameLabels, RetailerLabels, DropTypeLabels, ShowTypeLabels } from "@/types";
+import type { TradeShow } from "@/types";
 import {
   format,
   startOfMonth,
@@ -12,8 +13,10 @@ import {
   isToday,
   addMonths,
   subMonths,
+  isSameDay,
+  isWithinInterval,
 } from "date-fns";
-import { ChevronLeft, ChevronRight, Download, Link as LinkIcon, ExternalLink, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Download, Link as LinkIcon, ExternalLink, MapPin } from "lucide-react";
 
 const gameColors: Record<string, string> = {
   POKEMON: "bg-blue-500",
@@ -24,6 +27,9 @@ const gameColors: Record<string, string> = {
   SPORTS: "bg-gray-500",
   OTHER: "bg-gray-400",
 };
+
+// Trade show color - purple to stand out from drops
+const SHOW_COLOR = "bg-purple-600";
 
 interface Drop {
   id: string;
@@ -47,9 +53,11 @@ interface Drop {
 export default function CalendarPage() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDrop, setSelectedDrop] = useState<Drop | null>(null);
+  const [selectedShow, setSelectedShow] = useState<TradeShow | null>(null);
   const [showPastDrops, setShowPastDrops] = useState(false);
   const { drops, loading } = useDrops({ upcoming: true, limit: 100 });
   const { drops: pastDrops, loading: pastLoading } = useDrops({ past: true, limit: 50 });
+  const { shows, loading: showsLoading } = useShows({ upcoming: true, limit: 100 });
 
   const calendarDays = useMemo(() => {
     const start = startOfMonth(currentMonth);
@@ -68,6 +76,16 @@ export default function CalendarPage() {
     });
     return map;
   }, [drops]);
+
+  // Get shows that overlap with a given day (shows can span multiple days)
+  const getShowsForDay = (day: Date): TradeShow[] => {
+    return shows.filter((show) => {
+      const start = new Date(show.startDate);
+      const end = new Date(show.endDate);
+      // Check if day falls within show dates (inclusive)
+      return isWithinInterval(day, { start, end }) || isSameDay(day, start) || isSameDay(day, end);
+    });
+  };
 
   const startDay = startOfMonth(currentMonth).getDay();
   const paddingDays = Array.from({ length: startDay }, (_, i) => i);
@@ -129,7 +147,7 @@ export default function CalendarPage() {
       </Card>
 
       {/* Calendar Grid */}
-      {loading ? (
+      {loading || showsLoading ? (
         <div className="flex items-center justify-center py-12">
           <LoadingSpinner size="lg" />
         </div>
@@ -158,7 +176,10 @@ export default function CalendarPage() {
             {calendarDays.map((day) => {
               const dateKey = format(day, "yyyy-MM-dd");
               const dayDrops = dropsByDate.get(dateKey) || [];
+              const dayShows = getShowsForDay(day);
               const today = isToday(day);
+              const totalItems = dayDrops.length + dayShows.length;
+              const maxVisible = 3;
 
               return (
                 <div
@@ -177,7 +198,20 @@ export default function CalendarPage() {
                     {format(day, "d")}
                   </div>
                   <div className="space-y-1">
-                    {dayDrops.slice(0, 3).map((drop) => (
+                    {/* Trade Shows first (purple) */}
+                    {dayShows.slice(0, maxVisible).map((show) => (
+                      <button
+                        key={show.id}
+                        onClick={() => setSelectedShow(show)}
+                        className={`w-full truncate rounded px-1 py-0.5 text-left text-xs text-white transition-opacity hover:opacity-80 ${SHOW_COLOR} flex items-center gap-1`}
+                        title={`${show.name} - ${show.city}, ${show.state}`}
+                      >
+                        <MapPin className="h-2.5 w-2.5 flex-shrink-0" />
+                        <span className="truncate">{show.name}</span>
+                      </button>
+                    ))}
+                    {/* Drops after shows */}
+                    {dayDrops.slice(0, Math.max(0, maxVisible - dayShows.length)).map((drop) => (
                       <button
                         key={drop.id}
                         onClick={() => setSelectedDrop(drop)}
@@ -189,9 +223,9 @@ export default function CalendarPage() {
                         {drop.product.name}
                       </button>
                     ))}
-                    {dayDrops.length > 3 && (
+                    {totalItems > maxVisible && (
                       <div className="text-xs text-gray-500 dark:text-gray-400">
-                        +{dayDrops.length - 3} more
+                        +{totalItems - maxVisible} more
                       </div>
                     )}
                   </div>
@@ -207,7 +241,16 @@ export default function CalendarPage() {
         <h3 className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
           Legend
         </h3>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-4">
+          {/* Trade Shows */}
+          <div className="flex items-center gap-1.5">
+            <div className={`h-3 w-3 rounded ${SHOW_COLOR}`} />
+            <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+              Trade Shows
+            </span>
+          </div>
+          <div className="h-4 w-px bg-gray-300 dark:bg-gray-600" />
+          {/* Game Drops */}
           {Object.entries(gameColors).map(([game, color]) => (
             <div key={game} className="flex items-center gap-1.5">
               <div className={`h-3 w-3 rounded ${color}`} />
@@ -399,6 +442,97 @@ export default function CalendarPage() {
                 </a>
               )}
               <Button variant="outline" onClick={() => setSelectedDrop(null)}>
+                Close
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Trade Show Detail Modal */}
+      <Modal
+        isOpen={!!selectedShow}
+        onClose={() => setSelectedShow(null)}
+        title="Trade Show Details"
+      >
+        {selectedShow && (
+          <div className="space-y-4">
+            {/* Show Header */}
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <div className={`h-4 w-4 rounded ${SHOW_COLOR}`} />
+                <Badge variant="default">{ShowTypeLabels[selectedShow.showType] || selectedShow.showType}</Badge>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                {selectedShow.name}
+              </h3>
+              {selectedShow.organizer && (
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  by {selectedShow.organizer}
+                </p>
+              )}
+            </div>
+
+            {/* Show Details */}
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-500">Dates</span>
+                <span className="font-medium text-gray-900 dark:text-white">
+                  {format(new Date(selectedShow.startDate), "MMM d")} - {format(new Date(selectedShow.endDate), "MMM d, yyyy")}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">Venue</span>
+                <span className="font-medium text-gray-900 dark:text-white text-right">
+                  {selectedShow.venueName}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">Location</span>
+                <span className="font-medium text-gray-900 dark:text-white">
+                  {selectedShow.city}, {selectedShow.state}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">Address</span>
+                <span className="font-medium text-gray-900 dark:text-white text-right max-w-[200px]">
+                  {selectedShow.address}
+                </span>
+              </div>
+              {selectedShow.description && (
+                <div className="mt-3 rounded-lg bg-gray-100 p-3 dark:bg-gray-800">
+                  <p className="text-gray-700 dark:text-gray-300">{selectedShow.description}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-2 pt-2">
+              {selectedShow.website && (
+                <a
+                  href={selectedShow.website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1"
+                >
+                  <Button variant="primary" className="w-full">
+                    <ExternalLink className="h-4 w-4" />
+                    Visit Website
+                  </Button>
+                </a>
+              )}
+              {selectedShow.ticketUrl && (
+                <a
+                  href={selectedShow.ticketUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Button variant="outline">
+                    Get Tickets
+                  </Button>
+                </a>
+              )}
+              <Button variant="outline" onClick={() => setSelectedShow(null)}>
                 Close
               </Button>
             </div>
