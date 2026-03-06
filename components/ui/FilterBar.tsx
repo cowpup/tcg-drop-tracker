@@ -1,6 +1,7 @@
 "use client";
 
 import { type ReactNode } from "react";
+import { X, SlidersHorizontal } from "lucide-react";
 
 interface FilterOption {
   value: string;
@@ -24,12 +25,21 @@ export function FilterBar({ children, className = "" }: FilterBarProps) {
   return (
     <div
       className={`
-        flex flex-wrap items-center gap-3 rounded-lg border border-gray-200
-        bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800/50
+        flex flex-wrap items-center gap-4
+        p-4 rounded-2xl
+        bg-white/[0.02] border border-white/[0.06]
+        backdrop-blur-sm
         ${className}
       `}
     >
-      {children}
+      <div className="flex items-center gap-2 text-[var(--foreground-muted)]">
+        <SlidersHorizontal className="h-4 w-4" />
+        <span className="text-sm font-medium">Filter</span>
+      </div>
+      <div className="h-6 w-px bg-white/10 hidden sm:block" />
+      <div className="flex flex-wrap items-center gap-3">
+        {children}
+      </div>
     </div>
   );
 }
@@ -41,27 +51,50 @@ export function SelectFilter({
   onChange,
   placeholder = "All",
 }: SelectFilterProps) {
+  const isActive = value !== "";
+
   return (
-    <div className="flex flex-col gap-1">
-      <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
-        {label}
-      </label>
+    <div className="relative">
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="
-          rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm
-          focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500
-          dark:border-gray-600 dark:bg-gray-700 dark:text-white
-        "
+        className={`
+          appearance-none cursor-pointer
+          pl-3 pr-8 py-2 rounded-xl text-sm font-medium
+          transition-all duration-200
+          focus:outline-none focus:ring-2 focus:ring-[var(--drip-cyan)]/50
+          ${
+            isActive
+              ? "bg-[var(--drip-cyan)]/10 text-[var(--drip-cyan)] border border-[var(--drip-cyan)]/30"
+              : "bg-white/5 text-[var(--foreground-muted)] border border-white/10 hover:bg-white/10 hover:text-[var(--foreground)]"
+          }
+        `}
       >
-        <option value="">{placeholder}</option>
+        <option value="" className="bg-[var(--background-elevated)] text-[var(--foreground)]">
+          {label}: {placeholder}
+        </option>
         {options.map((option) => (
-          <option key={option.value} value={option.value}>
+          <option
+            key={option.value}
+            value={option.value}
+            className="bg-[var(--background-elevated)] text-[var(--foreground)]"
+          >
             {option.label}
           </option>
         ))}
       </select>
+
+      {/* Custom dropdown arrow */}
+      <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">
+        <svg
+          className={`h-4 w-4 transition-colors ${isActive ? "text-[var(--drip-cyan)]" : "text-[var(--foreground-muted)]"}`}
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </div>
     </div>
   );
 }
@@ -88,27 +121,31 @@ export function MultiSelectFilter({
   };
 
   return (
-    <div className="flex flex-col gap-1">
-      <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
+    <div className="flex flex-col gap-2">
+      <label className="text-xs font-medium text-[var(--foreground-muted)]">
         {label}
       </label>
-      <div className="flex flex-wrap gap-1">
-        {options.map((option) => (
-          <button
-            key={option.value}
-            onClick={() => toggleValue(option.value)}
-            className={`
-              rounded-full px-2.5 py-1 text-xs font-medium transition-colors
-              ${
-                values.includes(option.value)
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
-              }
-            `}
-          >
-            {option.label}
-          </button>
-        ))}
+      <div className="flex flex-wrap gap-2">
+        {options.map((option) => {
+          const isSelected = values.includes(option.value);
+          return (
+            <button
+              key={option.value}
+              onClick={() => toggleValue(option.value)}
+              className={`
+                px-3 py-1.5 rounded-xl text-sm font-medium
+                transition-all duration-200
+                ${
+                  isSelected
+                    ? "bg-[var(--drip-cyan)]/20 text-[var(--drip-cyan)] border border-[var(--drip-cyan)]/30"
+                    : "bg-white/5 text-[var(--foreground-muted)] border border-white/10 hover:bg-white/10"
+                }
+              `}
+            >
+              {option.label}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -130,8 +167,8 @@ export function DateRangeFilter({
   onEndChange,
 }: DateRangeFilterProps) {
   return (
-    <div className="flex flex-col gap-1">
-      <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
+    <div className="flex flex-col gap-2">
+      <label className="text-xs font-medium text-[var(--foreground-muted)]">
         {label}
       </label>
       <div className="flex items-center gap-2">
@@ -140,20 +177,24 @@ export function DateRangeFilter({
           value={startDate}
           onChange={(e) => onStartChange(e.target.value)}
           className="
-            rounded-md border border-gray-300 bg-white px-2 py-1.5 text-sm
-            focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500
-            dark:border-gray-600 dark:bg-gray-700 dark:text-white
+            px-3 py-2 rounded-xl text-sm
+            bg-white/5 border border-white/10
+            text-[var(--foreground)]
+            focus:outline-none focus:ring-2 focus:ring-[var(--drip-cyan)]/50 focus:border-[var(--drip-cyan)]/30
+            transition-all duration-200
           "
         />
-        <span className="text-gray-400">to</span>
+        <span className="text-[var(--foreground-muted)]">→</span>
         <input
           type="date"
           value={endDate}
           onChange={(e) => onEndChange(e.target.value)}
           className="
-            rounded-md border border-gray-300 bg-white px-2 py-1.5 text-sm
-            focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500
-            dark:border-gray-600 dark:bg-gray-700 dark:text-white
+            px-3 py-2 rounded-xl text-sm
+            bg-white/5 border border-white/10
+            text-[var(--foreground)]
+            focus:outline-none focus:ring-2 focus:ring-[var(--drip-cyan)]/50 focus:border-[var(--drip-cyan)]/30
+            transition-all duration-200
           "
         />
       </div>
@@ -166,12 +207,15 @@ export function ClearFiltersButton({ onClick }: { onClick: () => void }) {
     <button
       onClick={onClick}
       className="
-        ml-auto rounded-md px-3 py-1.5 text-sm font-medium text-gray-500
-        hover:bg-gray-200 hover:text-gray-700
-        dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200
+        ml-auto flex items-center gap-1.5
+        px-3 py-2 rounded-xl text-sm font-medium
+        text-[var(--foreground-muted)]
+        hover:text-red-400 hover:bg-red-400/10
+        transition-all duration-200
       "
     >
-      Clear filters
+      <X className="h-4 w-4" />
+      Clear
     </button>
   );
 }

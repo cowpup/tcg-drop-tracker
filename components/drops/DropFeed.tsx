@@ -15,7 +15,8 @@ import {
   DropTypeLabels,
   DropStatusLabels,
 } from "@/types";
-import { AlertCircle, RefreshCw } from "lucide-react";
+import { AlertCircle, RefreshCw, Droplets, Bell } from "lucide-react";
+import Link from "next/link";
 
 const gameOptions = Object.values(Game).map((g) => ({
   value: g,
@@ -63,25 +64,35 @@ export function DropFeed() {
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-lg border border-red-200 bg-red-50 p-8 text-center dark:border-red-900 dark:bg-red-900/20">
-        <AlertCircle className="h-10 w-10 text-red-500" />
-        <h3 className="mt-3 text-lg font-medium text-red-800 dark:text-red-200">
-          Failed to load drops
+      <div className="flex flex-col items-center justify-center rounded-2xl border border-red-500/20 bg-red-500/5 p-12 text-center">
+        <div className="relative mb-4">
+          <AlertCircle className="h-12 w-12 text-red-400" />
+          <div className="absolute inset-0 blur-xl bg-red-500/30" />
+        </div>
+        <h3 className="text-lg font-semibold text-[var(--foreground)] mb-2">
+          Oops! Something went wrong
         </h3>
-        <p className="mt-1 text-sm text-red-600 dark:text-red-300">{error}</p>
+        <p className="text-sm text-[var(--foreground-muted)] mb-6 max-w-sm">
+          We couldn&apos;t load the drops. This is probably temporary.
+        </p>
         <button
           onClick={refetch}
-          className="mt-4 flex items-center gap-2 rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
+          className="
+            inline-flex items-center gap-2 px-5 py-2.5
+            bg-red-500/10 border border-red-500/20 rounded-xl
+            text-red-400 font-medium text-sm
+            hover:bg-red-500/20 transition-all duration-200
+          "
         >
           <RefreshCw className="h-4 w-4" />
-          Try Again
+          Try again
         </button>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* Filters */}
       <FilterBar>
         <SelectFilter
@@ -113,30 +124,84 @@ export function DropFeed() {
 
       {/* Loading State */}
       {loading && (
-        <div className="flex items-center justify-center py-12">
+        <div className="flex flex-col items-center justify-center py-16">
           <LoadingSpinner size="lg" />
+          <p className="mt-4 text-sm text-[var(--foreground-muted)] animate-pulse">
+            Finding the freshest drops...
+          </p>
         </div>
       )}
 
-      {/* Empty State */}
+      {/* Empty State - With personality! */}
       {!loading && drops.length === 0 && (
-        <div className="flex flex-col items-center justify-center rounded-lg border border-gray-200 bg-gray-50 p-12 text-center dark:border-gray-700 dark:bg-gray-800/50">
-          <p className="text-lg font-medium text-gray-900 dark:text-white">
-            No drops found
-          </p>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+        <div className="relative flex flex-col items-center justify-center rounded-2xl border border-white/[0.06] bg-white/[0.02] p-16 text-center overflow-hidden">
+          {/* Decorative blobs */}
+          <div
+            className="absolute top-0 right-0 w-64 h-64 opacity-30 blur-3xl"
+            style={{ background: "radial-gradient(circle, var(--drip-cyan) 0%, transparent 70%)" }}
+          />
+          <div
+            className="absolute bottom-0 left-0 w-48 h-48 opacity-20 blur-3xl"
+            style={{ background: "radial-gradient(circle, var(--drip-purple) 0%, transparent 70%)" }}
+          />
+
+          {/* Animated droplet icon */}
+          <div className="relative mb-6">
+            <Droplets className="h-16 w-16 text-[var(--drip-cyan)] animate-[float_3s_ease-in-out_infinite]" />
+            <div className="absolute inset-0 blur-2xl bg-[var(--drip-cyan)]/20" />
+          </div>
+
+          <h3 className="text-xl font-semibold text-[var(--foreground)] mb-2">
+            {hasActiveFilters ? "No matches found" : "No drops yet"}
+          </h3>
+          <p className="text-[var(--foreground-muted)] max-w-md mb-8">
             {hasActiveFilters
-              ? "Try adjusting your filters"
-              : "Check back later for upcoming drops"}
+              ? "Try adjusting your filters or check back later for new drops."
+              : "We're watching the retailers. When something drops, you'll see it here."}
           </p>
+
+          {hasActiveFilters ? (
+            <button
+              onClick={clearFilters}
+              className="
+                inline-flex items-center gap-2 px-5 py-2.5
+                bg-white/5 border border-white/10 rounded-xl
+                text-[var(--foreground)] font-medium text-sm
+                hover:bg-white/10 transition-all duration-200
+              "
+            >
+              Clear all filters
+            </button>
+          ) : (
+            <Link
+              href="/webhooks"
+              className="
+                inline-flex items-center gap-2 px-5 py-2.5
+                bg-[var(--drip-cyan)]/10 border border-[var(--drip-cyan)]/20 rounded-xl
+                text-[var(--drip-cyan)] font-medium text-sm
+                hover:bg-[var(--drip-cyan)]/20 transition-all duration-200
+              "
+            >
+              <Bell className="h-4 w-4" />
+              Set up alerts
+            </Link>
+          )}
         </div>
       )}
 
-      {/* Drops Grid */}
+      {/* Drops Grid - staggered animation feel */}
       {!loading && drops.length > 0 && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {drops.map((drop) => (
-            <DropCard key={drop.id} drop={drop} />
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {drops.map((drop, index) => (
+            <div
+              key={drop.id}
+              style={{
+                animationDelay: `${index * 50}ms`,
+              }}
+              className="animate-[fadeIn_0.3s_ease-out_forwards] opacity-0"
+            >
+              <DropCard drop={drop} />
+            </div>
           ))}
         </div>
       )}
