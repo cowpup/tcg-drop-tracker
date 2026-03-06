@@ -269,8 +269,8 @@ export function ShowMap({ shows }: ShowMapProps) {
       <div className="relative overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
         <div ref={mapContainer} className="h-[450px] w-full" />
 
-        {/* Legend */}
-        <div className="absolute bottom-4 left-4 rounded-lg bg-white/95 p-3 shadow-lg backdrop-blur-sm dark:bg-gray-800/95">
+        {/* Legend - positioned above Mapbox logo */}
+        <div className="absolute bottom-12 left-4 rounded-lg bg-white/95 p-3 shadow-lg backdrop-blur-sm dark:bg-gray-800/95">
           <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
             Legend
           </p>
