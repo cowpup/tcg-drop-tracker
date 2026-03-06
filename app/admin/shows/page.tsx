@@ -1,11 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@clerk/nextjs";
-import { Card, Button, LoadingSpinner } from "@/components/ui";
+import { Card, Button, Badge, LoadingSpinner, Modal } from "@/components/ui";
 import { ShowType, ShowTier, ShowTypeLabels, ShowTierLabels } from "@/types";
-import { ArrowLeft, Save, Check, Download, RefreshCw, Trash2 } from "lucide-react";
+import {
+  ArrowLeft,
+  Save,
+  Check,
+  Download,
+  RefreshCw,
+  Trash2,
+  Edit2,
+  Plus,
+  MapPin,
+  Calendar,
+  ExternalLink,
+} from "lucide-react";
 import Link from "next/link";
+import { format } from "date-fns";
 
 const ADMIN_USER_IDS = process.env.NEXT_PUBLIC_ADMIN_USER_IDS?.split(",") || [];
 
@@ -17,10 +30,50 @@ const US_STATES = [
   "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"
 ];
 
-export default function AddShowPage() {
+interface TradeShow {
+  id: string;
+  name: string;
+  organizer: string | null;
+  showType: ShowType;
+  tier: ShowTier;
+  startDate: string;
+  endDate: string;
+  venueName: string;
+  address: string;
+  city: string;
+  state: string;
+  zip: string | null;
+  website: string | null;
+  ticketUrl: string | null;
+  description: string | null;
+  featured: boolean;
+  lat: number | null;
+  lng: number | null;
+}
+
+const emptyForm = {
+  name: "",
+  organizer: "",
+  showType: "" as ShowType | "",
+  tier: "" as ShowTier | "",
+  startDate: "",
+  endDate: "",
+  venueName: "",
+  address: "",
+  city: "",
+  state: "",
+  zip: "",
+  website: "",
+  ticketUrl: "",
+  description: "",
+  featured: false,
+};
+
+export default function ManageShowsPage() {
   const { userId } = useAuth();
+  const [shows, setShows] = useState<TradeShow[]>([]);
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [seeding, setSeeding] = useState(false);
   const [seedResult, setSeedResult] = useState<{
@@ -29,51 +82,47 @@ export default function AddShowPage() {
     total: number;
   } | null>(null);
 
-  const [formData, setFormData] = useState({
-    name: "",
-    organizer: "",
-    showType: "" as ShowType | "",
-    tier: "" as ShowTier | "",
-    startDate: "",
-    endDate: "",
-    venueName: "",
-    address: "",
-    city: "",
-    state: "",
-    zip: "",
-    website: "",
-    ticketUrl: "",
-    description: "",
-    featured: false,
-  });
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingShow, setEditingShow] = useState<TradeShow | null>(null);
+  const [formData, setFormData] = useState(emptyForm);
 
   const isAdmin = userId && ADMIN_USER_IDS.includes(userId);
 
-  const bulkSeedShows = async () => {
-    if (!confirm("Import 25+ verified trade shows including Collect-A-Con, The National, Pokemon Regionals, Comic-Con, and Gen Con?")) {
-      return;
+  useEffect(() => {
+    fetchShows();
+  }, []);
+
+  const fetchShows = async () => {
+    try {
+      const res = await fetch("/api/shows?limit=100");
+      const data = await res.json();
+      setShows(data.data || []);
+    } catch (err) {
+      console.error("Failed to fetch shows:", err);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const bulkSeedShows = async () => {
+    if (!confirm("Import 25+ verified trade shows?")) return;
 
     setSeeding(true);
     setSeedResult(null);
     setError(null);
 
     try {
-      const res = await fetch("/api/shows/seed", {
-        method: "POST",
-      });
-
+      const res = await fetch("/api/shows/seed", { method: "POST" });
       const data = await res.json();
 
-      if (!res.ok) {
-        throw new Error(data.error || "Seed failed");
-      }
+      if (!res.ok) throw new Error(data.error || "Seed failed");
 
       setSeedResult({
         created: data.created,
         skipped: data.skipped,
         total: data.total,
       });
+      fetchShows();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Bulk seed failed");
     } finally {
@@ -81,47 +130,72 @@ export default function AddShowPage() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const openCreateModal = () => {
+    setEditingShow(null);
+    setFormData(emptyForm);
+    setModalOpen(true);
+  };
+
+  const openEditModal = (show: TradeShow) => {
+    setEditingShow(show);
+    setFormData({
+      name: show.name,
+      organizer: show.organizer || "",
+      showType: show.showType,
+      tier: show.tier,
+      startDate: show.startDate.split("T")[0],
+      endDate: show.endDate.split("T")[0],
+      venueName: show.venueName,
+      address: show.address,
+      city: show.city,
+      state: show.state,
+      zip: show.zip || "",
+      website: show.website || "",
+      ticketUrl: show.ticketUrl || "",
+      description: show.description || "",
+      featured: show.featured,
+    });
+    setModalOpen(true);
+  };
+
+  const saveShow = async () => {
     setSaving(true);
     setError(null);
 
     try {
-      const res = await fetch("/api/shows", {
-        method: "POST",
+      const url = editingShow ? `/api/shows/${editingShow.id}` : "/api/shows";
+      const method = editingShow ? "PATCH" : "POST";
+
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
 
       const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
 
-      if (!res.ok) {
-        throw new Error(data.error);
-      }
-
-      setSaved(true);
-      setFormData({
-        name: "",
-        organizer: "",
-        showType: "",
-        tier: "",
-        startDate: "",
-        endDate: "",
-        venueName: "",
-        address: "",
-        city: "",
-        state: "",
-        zip: "",
-        website: "",
-        ticketUrl: "",
-        description: "",
-        featured: false,
-      });
-      setTimeout(() => setSaved(false), 3000);
+      await fetchShows();
+      setModalOpen(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create show");
+      setError(err instanceof Error ? err.message : "Failed to save show");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const deleteShow = async (id: string) => {
+    if (!confirm("Delete this trade show?")) return;
+
+    try {
+      const res = await fetch(`/api/shows/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error);
+      }
+      setShows(shows.filter((s) => s.id !== id));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete show");
     }
   };
 
@@ -135,60 +209,159 @@ export default function AddShowPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Link href="/admin">
-          <Button variant="ghost" size="sm">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Add Trade Show
-          </h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Create a new trade show or event
-          </p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Link href="/admin">
+            <Button variant="ghost" size="sm">
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          </Link>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+              Trade Shows
+            </h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
+              Manage trade shows and events
+            </p>
+          </div>
         </div>
+        <Button onClick={openCreateModal}>
+          <Plus className="h-4 w-4" />
+          Add Show
+        </Button>
       </div>
 
       {/* Bulk Import */}
       <Card>
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+            <h2 className="font-semibold text-gray-900 dark:text-white">
               Bulk Import
             </h2>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Import verified trade shows: Collect-A-Con, The National, Pokemon Regionals, Comic-Con, Gen Con
+              Import verified shows: Collect-A-Con, The National, Pokemon events, conventions
             </p>
             {seedResult && (
               <p className="mt-2 text-sm text-green-600 dark:text-green-400">
-                Created {seedResult.created} shows, skipped {seedResult.skipped} existing. Total: {seedResult.total}
+                Created {seedResult.created}, skipped {seedResult.skipped} existing
               </p>
             )}
           </div>
-          <Button
-            variant="outline"
-            onClick={bulkSeedShows}
-            loading={seeding}
-          >
-            {seeding ? (
-              <>
-                <RefreshCw className="h-4 w-4 animate-spin" />
-                Importing...
-              </>
-            ) : (
-              <>
-                <Download className="h-4 w-4" />
-                Import Shows
-              </>
-            )}
+          <Button variant="outline" onClick={bulkSeedShows} loading={seeding}>
+            <Download className="h-4 w-4" />
+            Import Shows
           </Button>
         </div>
       </Card>
 
+      {error && (
+        <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600 dark:bg-red-900/20 dark:text-red-400">
+          {error}
+        </div>
+      )}
+
+      {/* Shows List */}
       <Card>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="font-semibold text-gray-900 dark:text-white">
+            All Shows ({shows.length})
+          </h2>
+        </div>
+
+        {loading ? (
+          <div className="flex justify-center py-8">
+            <LoadingSpinner size="lg" />
+          </div>
+        ) : shows.length === 0 ? (
+          <p className="py-8 text-center text-sm text-gray-500">
+            No shows yet. Add one or use bulk import.
+          </p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-200 dark:border-gray-700">
+                  <th className="pb-3 text-left font-medium text-gray-500">Show</th>
+                  <th className="pb-3 text-left font-medium text-gray-500">Location</th>
+                  <th className="pb-3 text-left font-medium text-gray-500">Dates</th>
+                  <th className="pb-3 text-left font-medium text-gray-500">Type</th>
+                  <th className="pb-3 text-center font-medium text-gray-500">Geocoded</th>
+                  <th className="pb-3 text-right font-medium text-gray-500">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {shows.map((show) => (
+                  <tr key={show.id} className="border-b border-gray-100 dark:border-gray-800">
+                    <td className="py-3">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-gray-900 dark:text-white">
+                          {show.name}
+                        </span>
+                        {show.featured && (
+                          <Badge variant="primary" size="sm">Featured</Badge>
+                        )}
+                      </div>
+                      {show.website && (
+                        <a
+                          href={show.website}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-1 flex items-center gap-1 text-xs text-blue-600 hover:underline"
+                        >
+                          Website <ExternalLink className="h-3 w-3" />
+                        </a>
+                      )}
+                    </td>
+                    <td className="py-3 text-gray-600 dark:text-gray-400">
+                      {show.city}, {show.state}
+                    </td>
+                    <td className="py-3 text-gray-600 dark:text-gray-400">
+                      {format(new Date(show.startDate), "MMM d")} - {format(new Date(show.endDate), "MMM d, yyyy")}
+                    </td>
+                    <td className="py-3">
+                      <Badge variant="default" size="sm">
+                        {ShowTypeLabels[show.showType] || show.showType}
+                      </Badge>
+                    </td>
+                    <td className="py-3 text-center">
+                      {show.lat && show.lng ? (
+                        <MapPin className="mx-auto h-4 w-4 text-green-500" />
+                      ) : (
+                        <span className="text-gray-400">-</span>
+                      )}
+                    </td>
+                    <td className="py-3">
+                      <div className="flex justify-end gap-1">
+                        <button
+                          onClick={() => openEditModal(show)}
+                          className="rounded p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700"
+                        >
+                          <Edit2 className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => deleteShow(show.id)}
+                          className="rounded p-1.5 text-gray-400 hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-900/20"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
+
+      {/* Create/Edit Modal */}
+      <Modal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title={editingShow ? "Edit Trade Show" : "Add Trade Show"}
+        size="lg"
+      >
+        <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -203,7 +376,6 @@ export default function AddShowPage() {
                 className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
               />
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Organizer
@@ -230,13 +402,10 @@ export default function AddShowPage() {
               >
                 <option value="">Select type...</option>
                 {Object.values(ShowType).map((t) => (
-                  <option key={t} value={t}>
-                    {ShowTypeLabels[t] || t}
-                  </option>
+                  <option key={t} value={t}>{ShowTypeLabels[t] || t}</option>
                 ))}
               </select>
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Tier *
@@ -249,9 +418,7 @@ export default function AddShowPage() {
               >
                 <option value="">Select tier...</option>
                 {Object.values(ShowTier).map((t) => (
-                  <option key={t} value={t}>
-                    {ShowTierLabels[t] || t}
-                  </option>
+                  <option key={t} value={t}>{ShowTierLabels[t] || t}</option>
                 ))}
               </select>
             </div>
@@ -270,7 +437,6 @@ export default function AddShowPage() {
                 className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
               />
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 End Date *
@@ -294,7 +460,6 @@ export default function AddShowPage() {
               required
               value={formData.venueName}
               onChange={(e) => setFormData({ ...formData, venueName: e.target.value })}
-              placeholder="e.g., Dallas Convention Center"
               className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
             />
           </div>
@@ -325,7 +490,6 @@ export default function AddShowPage() {
                 className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
               />
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 State *
@@ -342,7 +506,6 @@ export default function AddShowPage() {
                 ))}
               </select>
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 ZIP
@@ -368,7 +531,6 @@ export default function AddShowPage() {
                 className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
               />
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Ticket URL
@@ -387,7 +549,7 @@ export default function AddShowPage() {
               Description
             </label>
             <textarea
-              rows={3}
+              rows={2}
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
@@ -403,31 +565,20 @@ export default function AddShowPage() {
               className="h-4 w-4 rounded border-gray-300"
             />
             <label htmlFor="featured" className="text-sm text-gray-700 dark:text-gray-300">
-              Featured event (highlight on map)
+              Featured event
             </label>
           </div>
 
-          {error && (
-            <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-          )}
-
-          <div className="flex justify-end">
-            <Button type="submit" loading={saving}>
-              {saved ? (
-                <>
-                  <Check className="h-4 w-4" />
-                  Saved
-                </>
-              ) : (
-                <>
-                  <Save className="h-4 w-4" />
-                  Create Show
-                </>
-              )}
+          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <Button variant="outline" onClick={() => setModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={saveShow} loading={saving}>
+              {editingShow ? "Save Changes" : "Create Show"}
             </Button>
           </div>
-        </form>
-      </Card>
+        </div>
+      </Modal>
     </div>
   );
 }
