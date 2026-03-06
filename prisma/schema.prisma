@@ -112,9 +112,30 @@ model TradeShow {
   @@index([showType])
 }
 
+// User profiles with roles and subscriptions
+model User {
+  id              String           @id @default(cuid())
+  clerkUserId     String           @unique
+  email           String?
+  displayName     String?
+  role            UserRole         @default(USER)
+  subscriptionTier SubscriptionTier @default(FREE)
+  subscriptionExpiresAt DateTime?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  preference      UserPreference?
+  webhooks        DiscordWebhook[]
+
+  @@index([role])
+  @@index([subscriptionTier])
+}
+
 // User notification preferences
 model UserPreference {
   id           String       @id @default(cuid())
+  userId       String?      @unique
+  user         User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
   clerkUserId  String       @unique
   email        String?
   games        Game[]
@@ -125,10 +146,12 @@ model UserPreference {
   updatedAt    DateTime     @updatedAt
 }
 
-// Discord webhooks registered by community operators
+// Discord webhooks registered by community operators (subscribers only)
 model DiscordWebhook {
   id          String       @id @default(cuid())
-  clerkUserId String
+  userId      String?
+  user        User?        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clerkUserId String       // Keep for backwards compatibility
   webhookUrl  String
   label       String
   games       Game[]
@@ -138,6 +161,7 @@ model DiscordWebhook {
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
+  @@index([userId])
   @@index([clerkUserId])
   @@index([active])
 }
@@ -231,4 +255,17 @@ enum ShowTier {
   REGIONAL    // medium pin
   MAJOR       // large pin, special style
   NATIONAL    // largest, featured treatment
+}
+
+enum UserRole {
+  USER          // Regular user
+  SUBSCRIBER    // Paid subscriber with webhook access
+  ADMIN         // Can manage content, not users
+  SUPER_ADMIN   // Can manage everything including admins
+}
+
+enum SubscriptionTier {
+  FREE          // Basic access
+  SUBSCRIBER    // Webhook access, email notifications
+  PREMIUM       // Future: priority alerts, etc.
 }

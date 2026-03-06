@@ -49,11 +49,18 @@ const signalTypeOptions = Object.values(SignalType).map((t) => ({
   label: SignalTypeLabels[t] || t,
 }));
 
+interface UserProfile {
+  canCreateWebhooks: boolean;
+  subscriptionTier: string;
+  role: string;
+}
+
 export default function WebhooksPage() {
   const { isSignedIn, isLoaded } = useAuth();
   const [webhooks, setWebhooks] = useState<DiscordWebhook[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingWebhook, setEditingWebhook] = useState<DiscordWebhook | null>(null);
@@ -65,6 +72,18 @@ export default function WebhooksPage() {
     signalTypes: [] as string[],
   });
   const [saving, setSaving] = useState(false);
+
+  const fetchUserProfile = useCallback(async () => {
+    try {
+      const res = await fetch("/api/users/me");
+      const data = await res.json();
+      if (res.ok) {
+        setUserProfile(data.data);
+      }
+    } catch {
+      console.error("Failed to fetch user profile");
+    }
+  }, []);
 
   const fetchWebhooks = useCallback(async () => {
     try {
@@ -85,10 +104,11 @@ export default function WebhooksPage() {
   useEffect(() => {
     if (isSignedIn) {
       fetchWebhooks();
+      fetchUserProfile();
     } else {
       setLoading(false);
     }
-  }, [isSignedIn, fetchWebhooks]);
+  }, [isSignedIn, fetchWebhooks, fetchUserProfile]);
 
   const openCreateModal = () => {
     setEditingWebhook(null);
@@ -220,11 +240,37 @@ export default function WebhooksPage() {
             Send drop alerts directly to your Discord server
           </p>
         </div>
-        <Button onClick={openCreateModal}>
-          <Plus className="h-4 w-4" />
-          Add Webhook
-        </Button>
+        {userProfile?.canCreateWebhooks ? (
+          <Button onClick={openCreateModal}>
+            <Plus className="h-4 w-4" />
+            Add Webhook
+          </Button>
+        ) : (
+          <Badge variant="warning">Subscriber Feature</Badge>
+        )}
       </div>
+
+      {/* Subscription Required Notice */}
+      {userProfile && !userProfile.canCreateWebhooks && (
+        <Card>
+          <div className="flex items-start gap-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900">
+              <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+            </div>
+            <div>
+              <h3 className="font-medium text-gray-900 dark:text-white">
+                Subscription Required
+              </h3>
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                Discord webhook notifications are a subscriber feature. Upgrade your account to create webhooks and receive real-time drop alerts in your Discord server.
+              </p>
+              <p className="mt-2 text-xs text-gray-400">
+                Current tier: {userProfile.subscriptionTier}
+              </p>
+            </div>
+          </div>
+        </Card>
+      )}
 
       {error && (
         <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-900 dark:bg-red-900/20">

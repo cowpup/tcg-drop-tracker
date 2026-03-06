@@ -34,13 +34,52 @@ export async function GET() {
   }
 }
 
-// POST /api/webhooks/discord - Register a new webhook
+// POST /api/webhooks/discord - Register a new webhook (subscribers only)
 export async function POST(request: NextRequest) {
   try {
     const { userId } = await auth();
 
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Check if user has subscriber access
+    const user = await prisma.user.findUnique({
+      where: { clerkUserId: userId },
+    });
+
+    // Super admin bypass
+    const SUPER_ADMIN_ID = "user_3AXkPvNHZ8Jc09Csj9IWHKipRF9";
+    const isSuperAdmin = userId === SUPER_ADMIN_ID;
+
+    if (!isSuperAdmin) {
+      if (!user) {
+        return NextResponse.json(
+          { error: "User profile not found. Please refresh the page." },
+          { status: 403 }
+        );
+      }
+
+      // Check subscription status
+      const hasAccess =
+        user.subscriptionTier !== "FREE" ||
+        user.role === "ADMIN" ||
+        user.role === "SUPER_ADMIN";
+
+      if (!hasAccess) {
+        return NextResponse.json(
+          { error: "Webhook access requires a subscription. Upgrade to create webhooks." },
+          { status: 403 }
+        );
+      }
+
+      // Check subscription expiry
+      if (user.subscriptionExpiresAt && new Date(user.subscriptionExpiresAt) < new Date()) {
+        return NextResponse.json(
+          { error: "Your subscription has expired. Please renew to create webhooks." },
+          { status: 403 }
+        );
+      }
     }
 
     const body = await request.json();
@@ -100,6 +139,7 @@ export async function POST(request: NextRequest) {
     const webhook = await prisma.discordWebhook.create({
       data: {
         clerkUserId: userId,
+        userId: user?.id, // Link to user if exists
         webhookUrl,
         label,
         games: games || [],
