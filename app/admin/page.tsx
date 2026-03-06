@@ -239,8 +239,8 @@ export default function AdminPage() {
           </Link>
           <Link href="/admin/shows">
             <Button variant="outline" className="w-full justify-start">
-              <Plus className="h-4 w-4" />
-              Add Trade Show
+              <MapPin className="h-4 w-4" />
+              Manage Shows
             </Button>
           </Link>
           <Link href="/admin/monitors">
