@@ -165,9 +165,6 @@ export default function ManageShowsPage() {
     try {
       const res = await fetch("/api/cron/scrape-shows", {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${process.env.NEXT_PUBLIC_CRON_SECRET || "dev"}`,
-        },
       });
       const data = await res.json();
 

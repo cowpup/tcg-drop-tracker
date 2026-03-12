@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/db";
 import { ShowType, ShowTier, ShowSource } from "@prisma/client/index.js";
+
+const ADMIN_USER_IDS = process.env.NEXT_PUBLIC_ADMIN_USER_IDS?.split(",") || [];
 
 interface ScrapedShow {
   name: string;
@@ -267,7 +270,7 @@ async function scrapeSportsCollectorsDigest(): Promise<ScrapedShow[]> {
 // POST /api/cron/scrape-shows - Scrape trade shows from external sources
 export async function POST(request: NextRequest) {
   try {
-    // Validate cron request
+    // Validate cron request OR admin user
     const cronSecret = process.env.CRON_SECRET;
     const authHeader = request.headers.get("authorization");
     const vercelCronHeader = request.headers.get("x-vercel-cron");
@@ -275,7 +278,11 @@ export async function POST(request: NextRequest) {
     const isVercelCron = vercelCronHeader === cronSecret;
     const isBearerAuth = authHeader === `Bearer ${cronSecret}`;
 
-    if (!isVercelCron && !isBearerAuth) {
+    // Also allow admin users to trigger manually
+    const { userId } = await auth();
+    const isAdmin = userId && ADMIN_USER_IDS.includes(userId);
+
+    if (!isVercelCron && !isBearerAuth && !isAdmin) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
