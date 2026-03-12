@@ -112,6 +112,63 @@ function parseDateRange(dateStr: string, year: number): { start: Date; end: Date
   }
 }
 
+// Collect-A-Con 2026 schedule (from startickets.com, animecons.com)
+// Their site is JS-rendered so we maintain this list manually
+const COLLECTACON_2026: Array<{
+  city: string;
+  state: string;
+  startDate: string;
+  endDate: string;
+  venue: string;
+  address: string;
+  zip: string;
+}> = [
+  { city: "Houston", state: "TX", startDate: "2026-03-14", endDate: "2026-03-15", venue: "George R. Brown Convention Center", address: "1001 Avenida De Las Americas", zip: "77010" },
+  { city: "Fort Worth", state: "TX", startDate: "2026-04-04", endDate: "2026-04-05", venue: "Fort Worth Convention Center", address: "1201 Houston St", zip: "76102" },
+  { city: "Rosemont", state: "IL", startDate: "2026-04-25", endDate: "2026-04-26", venue: "Donald E. Stephens Convention Center", address: "5555 N River Rd", zip: "60018" },
+  { city: "Cleveland", state: "OH", startDate: "2026-05-09", endDate: "2026-05-10", venue: "Huntington Convention Center", address: "300 Lakeside Ave E", zip: "44114" },
+  { city: "Scottsdale", state: "AZ", startDate: "2026-05-16", endDate: "2026-05-17", venue: "Westworld of Scottsdale", address: "16601 N Pima Rd", zip: "85260" },
+  { city: "Orlando", state: "FL", startDate: "2026-05-23", endDate: "2026-05-24", venue: "Orange County Convention Center", address: "9800 International Dr", zip: "32819" },
+  { city: "Kansas City", state: "MO", startDate: "2026-06-13", endDate: "2026-06-14", venue: "Kansas City Convention Center", address: "301 W 13th St", zip: "64105" },
+  { city: "Las Vegas", state: "NV", startDate: "2026-06-20", endDate: "2026-06-21", venue: "Las Vegas Convention Center", address: "3150 Paradise Rd", zip: "89109" },
+  { city: "Edison", state: "NJ", startDate: "2026-07-11", endDate: "2026-07-12", venue: "New Jersey Convention & Exposition Center", address: "97 Sunfield Ave", zip: "08837" },
+  { city: "Minneapolis", state: "MN", startDate: "2026-07-18", endDate: "2026-07-19", venue: "Minneapolis Convention Center", address: "1301 2nd Ave S", zip: "55403" },
+];
+
+// Scrape Collect-A-Con events
+async function scrapeCollectACon(): Promise<ScrapedShow[]> {
+  const shows: ScrapedShow[] = [];
+
+  for (const event of COLLECTACON_2026) {
+    const startDate = new Date(event.startDate);
+    const endDate = new Date(event.endDate);
+
+    // Skip past events
+    if (endDate < new Date()) continue;
+
+    shows.push({
+      name: `Collect-A-Con ${event.city} 2026`,
+      organizer: "Collect-A-Con",
+      showType: "COLLECTACON",
+      tier: "MAJOR",
+      startDate,
+      endDate,
+      venueName: event.venue,
+      address: event.address,
+      city: event.city,
+      state: event.state,
+      zip: event.zip,
+      country: "US",
+      website: "https://collectaconusa.com/",
+      description: "The Nation's Largest Trading Card, Anime & Pop Culture Convention featuring 500+ dealers, celebrities, live concerts, box breaks, and more",
+      source: "COLLECT_A_CON",
+      sourceId: `cac-${event.city.toLowerCase().replace(/\s+/g, "-")}-2026`,
+    });
+  }
+
+  return shows;
+}
+
 // Scrape Trading Card Con events
 async function scrapeTradingCardCon(): Promise<ScrapedShow[]> {
   const shows: ScrapedShow[] = [];
@@ -296,13 +353,14 @@ export async function POST(request: NextRequest) {
     };
 
     // Scrape all sources in parallel
-    const [tradingCardConShows, scdShows] = await Promise.all([
+    const [collectAConShows, tradingCardConShows, scdShows] = await Promise.all([
+      scrapeCollectACon(),
       scrapeTradingCardCon(),
       scrapeSportsCollectorsDigest(),
     ]);
 
-    results.sourcesScraped = 2;
-    const allShows = [...tradingCardConShows, ...scdShows];
+    results.sourcesScraped = 3;
+    const allShows = [...collectAConShows, ...tradingCardConShows, ...scdShows];
     results.showsFound = allShows.length;
 
     // Process each show
@@ -379,6 +437,7 @@ export async function POST(request: NextRequest) {
         metadata: {
           sourcesScraped: results.sourcesScraped,
           showsSkipped: results.showsSkipped,
+          collectAConCount: collectAConShows.length,
           tradingCardConCount: tradingCardConShows.length,
           scdCount: scdShows.length,
         },
