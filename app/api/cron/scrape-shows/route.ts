@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/db";
+import { geocodeAddress } from "@/lib/geocoding";
 import { ShowType, ShowTier, ShowSource } from "@prisma/client/index.js";
 
 const ADMIN_USER_IDS = process.env.NEXT_PUBLIC_ADMIN_USER_IDS?.split(",") || [];
@@ -393,7 +394,27 @@ export async function POST(request: NextRequest) {
           continue;
         }
 
-        // Create new show
+        // Geocode the address
+        let lat: number | undefined;
+        let lng: number | undefined;
+
+        if (show.address && show.address !== "TBA" && show.address !== "See website for address") {
+          const geoResult = await geocodeAddress(
+            show.address,
+            show.city,
+            show.state,
+            show.zip,
+            show.country
+          );
+          if (geoResult) {
+            lat = geoResult.lat;
+            lng = geoResult.lng;
+          }
+          // Rate limit
+          await new Promise((r) => setTimeout(r, 100));
+        }
+
+        // Create new show with coordinates
         await prisma.tradeShow.create({
           data: {
             name: show.name,
@@ -407,6 +428,8 @@ export async function POST(request: NextRequest) {
             city: show.city,
             state: show.state,
             country: show.country,
+            lat,
+            lng,
             website: show.website,
             description: show.description,
             source: show.source,

@@ -107,6 +107,13 @@ export default function ManageShowsPage() {
     showsSkipped: number;
   } | null>(null);
 
+  const [geocoding, setGeocoding] = useState(false);
+  const [geocodeResult, setGeocodeResult] = useState<{
+    processed: number;
+    geocoded: number;
+    failed: number;
+  } | null>(null);
+
   const [filterVerified, setFilterVerified] = useState<"all" | "verified" | "unverified">("all");
   const [filterCategory, setFilterCategory] = useState<"all" | "shows" | "tournaments">("all");
 
@@ -181,6 +188,32 @@ export default function ManageShowsPage() {
       setError(err instanceof Error ? err.message : "Scrape failed");
     } finally {
       setScraping(false);
+    }
+  };
+
+  const geocodeShows = async () => {
+    setGeocoding(true);
+    setGeocodeResult(null);
+    setError(null);
+
+    try {
+      const res = await fetch("/api/shows/geocode?limit=50", {
+        method: "POST",
+      });
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || "Geocode failed");
+
+      setGeocodeResult({
+        processed: data.processed,
+        geocoded: data.geocoded,
+        failed: data.failed,
+      });
+      fetchShows();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Geocode failed");
+    } finally {
+      setGeocoding(false);
     }
   };
 
@@ -328,7 +361,7 @@ export default function ManageShowsPage() {
                 Auto-Scrape Shows
               </h2>
               <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                Fetch from Sports Collectors Digest, Trading Card Con
+                Fetch from Collect-A-Con, Trading Card Con, Sports Collectors Digest
               </p>
               {scrapeResult && (
                 <p className="mt-2 text-sm text-green-600 dark:text-green-400">
@@ -336,11 +369,23 @@ export default function ManageShowsPage() {
                 </p>
               )}
             </div>
-            <Button variant="primary" onClick={scrapeShows} loading={scraping}>
-              <Radar className="h-4 w-4" />
-              Scrape Now
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="primary" onClick={scrapeShows} loading={scraping}>
+                <Radar className="h-4 w-4" />
+                Scrape
+              </Button>
+              <Button variant="outline" onClick={geocodeShows} loading={geocoding}>
+                <MapPin className="h-4 w-4" />
+                Geocode
+              </Button>
+            </div>
           </div>
+          {geocodeResult && (
+            <p className="mt-2 text-sm text-green-600 dark:text-green-400">
+              Geocoded {geocodeResult.geocoded} of {geocodeResult.processed} shows
+              {geocodeResult.failed > 0 && `, ${geocodeResult.failed} failed`}
+            </p>
+          )}
         </Card>
 
         <Card>
