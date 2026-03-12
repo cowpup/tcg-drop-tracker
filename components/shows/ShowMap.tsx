@@ -128,8 +128,15 @@ export function ShowMap({ shows }: ShowMapProps) {
       locationGroups.get(key)!.push(show);
     });
 
+    // Sort location groups by soonest show date (furthest first, so soonest added last = on top)
+    const sortedGroups = Array.from(locationGroups.values()).sort((a, b) => {
+      const aMin = Math.min(...a.map((s) => new Date(s.startDate).getTime()));
+      const bMin = Math.min(...b.map((s) => new Date(s.startDate).getTime()));
+      return bMin - aMin; // Furthest first, soonest last (will be on top)
+    });
+
     // Create markers for each location group
-    locationGroups.forEach((showsAtLocation) => {
+    sortedGroups.forEach((showsAtLocation) => {
       // Sort by date
       showsAtLocation.sort((a, b) =>
         new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
