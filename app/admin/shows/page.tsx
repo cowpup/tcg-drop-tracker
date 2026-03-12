@@ -108,6 +108,7 @@ export default function ManageShowsPage() {
   } | null>(null);
 
   const [filterVerified, setFilterVerified] = useState<"all" | "verified" | "unverified">("all");
+  const [filterCategory, setFilterCategory] = useState<"all" | "shows" | "tournaments">("all");
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingShow, setEditingShow] = useState<TradeShow | null>(null);
@@ -202,9 +203,18 @@ export default function ManageShowsPage() {
     }
   };
 
+  const TOURNAMENT_TYPES: ShowType[] = ["REGIONAL_CHAMPIONSHIP", "NATIONALS"];
+  const SHOW_TYPES: ShowType[] = ["CARD_SHOW", "COLLECTACON", "COMIC_CON", "GAME_STORE_EVENT", "OTHER"];
+
   const filteredShows = shows.filter((show) => {
-    if (filterVerified === "verified") return show.verified;
-    if (filterVerified === "unverified") return !show.verified;
+    // Verified filter
+    if (filterVerified === "verified" && !show.verified) return false;
+    if (filterVerified === "unverified" && show.verified) return false;
+
+    // Category filter
+    if (filterCategory === "shows" && !SHOW_TYPES.includes(show.showType)) return false;
+    if (filterCategory === "tournaments" && !TOURNAMENT_TYPES.includes(show.showType)) return false;
+
     return true;
   });
 
@@ -371,11 +381,20 @@ export default function ManageShowsPage() {
           <div className="flex items-center gap-2">
             <Filter className="h-4 w-4 text-gray-400" />
             <select
+              value={filterCategory}
+              onChange={(e) => setFilterCategory(e.target.value as "all" | "shows" | "tournaments")}
+              className="rounded-md border border-gray-300 px-2 py-1 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+            >
+              <option value="all">All Types</option>
+              <option value="shows">Card Shows & Cons</option>
+              <option value="tournaments">Tournaments</option>
+            </select>
+            <select
               value={filterVerified}
               onChange={(e) => setFilterVerified(e.target.value as "all" | "verified" | "unverified")}
               className="rounded-md border border-gray-300 px-2 py-1 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
             >
-              <option value="all">All Shows</option>
+              <option value="all">All Status</option>
               <option value="unverified">Needs Review</option>
               <option value="verified">Verified</option>
             </select>
