@@ -2,6 +2,7 @@
   "crons": [
     { "path": "/api/cron/scrape-inventory", "schedule": "*/5 * * * *" },
     { "path": "/api/cron/scrape-security", "schedule": "*/3 * * * *" },
-    { "path": "/api/cron/discover-products", "schedule": "0 * * * *" }
+    { "path": "/api/cron/discover-products", "schedule": "0 * * * *" },
+    { "path": "/api/cron/scrape-shows", "schedule": "0 6 * * 1" }
   ]
 }

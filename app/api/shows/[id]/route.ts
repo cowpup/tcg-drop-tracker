@@ -72,6 +72,7 @@ export async function PATCH(
     if (body.ticketUrl !== undefined) updateData.ticketUrl = body.ticketUrl || null;
     if (body.description !== undefined) updateData.description = body.description || null;
     if (body.featured !== undefined) updateData.featured = body.featured;
+    if (body.verified !== undefined) updateData.verified = body.verified;
     if (body.lat !== undefined) updateData.lat = body.lat;
     if (body.lng !== undefined) updateData.lng = body.lng;
 

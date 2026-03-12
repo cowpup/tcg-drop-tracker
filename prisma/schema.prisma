@@ -85,11 +85,11 @@ model RetailerMonitor {
 
 // TradeShow
 model TradeShow {
-  id          String    @id @default(cuid())
+  id          String      @id @default(cuid())
   name        String
   organizer   String?
   showType    ShowType
-  tier        ShowTier  // determines pin size/style on map
+  tier        ShowTier    // determines pin size/style on map
   startDate   DateTime
   endDate     DateTime
   venueName   String
@@ -97,19 +97,25 @@ model TradeShow {
   city        String
   state       String
   zip         String?
-  country     String    @default("US")
+  country     String      @default("US")
   lat         Float?
   lng         Float?
   website     String?
   ticketUrl   String?
   description String?
-  featured    Boolean   @default(false)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  featured    Boolean     @default(false)
+  source      ShowSource  @default(MANUAL)
+  sourceId    String?     // external ID from source (for dedup)
+  verified    Boolean     @default(false) // admin verified
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
 
+  @@unique([source, sourceId]) // prevent duplicate imports
   @@index([startDate])
   @@index([state])
   @@index([showType])
+  @@index([source])
+  @@index([verified])
 }
 
 // User profiles with roles and subscriptions
@@ -255,6 +261,16 @@ enum ShowTier {
   REGIONAL    // medium pin
   MAJOR       // large pin, special style
   NATIONAL    // largest, featured treatment
+}
+
+enum ShowSource {
+  MANUAL                    // manually entered via admin
+  SEED                      // from seed data
+  SPORTS_COLLECTORS_DIGEST  // sportscollectorsdigest.com
+  TRADING_CARD_CON          // tradingcardcon.com
+  COLLECT_A_CON             // collectaconusa.com
+  RK9                       // rk9.gg (Pokemon events)
+  OTHER                     // other scraped source
 }
 
 enum UserRole {

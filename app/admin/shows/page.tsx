@@ -16,6 +16,10 @@ import {
   MapPin,
   Calendar,
   ExternalLink,
+  Radar,
+  CheckCircle,
+  Clock,
+  Filter,
 } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
@@ -29,6 +33,18 @@ const US_STATES = [
   "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
   "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"
 ];
+
+type ShowSource = "MANUAL" | "SEED" | "SPORTS_COLLECTORS_DIGEST" | "TRADING_CARD_CON" | "COLLECT_A_CON" | "RK9" | "OTHER";
+
+const ShowSourceLabels: Record<ShowSource, string> = {
+  MANUAL: "Manual",
+  SEED: "Seed Data",
+  SPORTS_COLLECTORS_DIGEST: "Sports Collectors Digest",
+  TRADING_CARD_CON: "Trading Card Con",
+  COLLECT_A_CON: "Collect-A-Con",
+  RK9: "RK9",
+  OTHER: "Other",
+};
 
 interface TradeShow {
   id: string;
@@ -49,6 +65,8 @@ interface TradeShow {
   featured: boolean;
   lat: number | null;
   lng: number | null;
+  source: ShowSource;
+  verified: boolean;
 }
 
 const emptyForm = {
@@ -81,6 +99,15 @@ export default function ManageShowsPage() {
     skipped: number;
     total: number;
   } | null>(null);
+
+  const [scraping, setScraping] = useState(false);
+  const [scrapeResult, setScrapeResult] = useState<{
+    showsFound: number;
+    showsCreated: number;
+    showsSkipped: number;
+  } | null>(null);
+
+  const [filterVerified, setFilterVerified] = useState<"all" | "verified" | "unverified">("all");
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editingShow, setEditingShow] = useState<TradeShow | null>(null);
@@ -129,6 +156,60 @@ export default function ManageShowsPage() {
       setSeeding(false);
     }
   };
+
+  const scrapeShows = async () => {
+    setScraping(true);
+    setScrapeResult(null);
+    setError(null);
+
+    try {
+      const res = await fetch("/api/cron/scrape-shows", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${process.env.NEXT_PUBLIC_CRON_SECRET || "dev"}`,
+        },
+      });
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || "Scrape failed");
+
+      setScrapeResult({
+        showsFound: data.showsFound,
+        showsCreated: data.showsCreated,
+        showsSkipped: data.showsSkipped,
+      });
+      fetchShows();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Scrape failed");
+    } finally {
+      setScraping(false);
+    }
+  };
+
+  const verifyShow = async (id: string) => {
+    try {
+      const res = await fetch(`/api/shows/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ verified: true }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error);
+      }
+
+      setShows(shows.map((s) => (s.id === id ? { ...s, verified: true } : s)));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to verify show");
+    }
+  };
+
+  const filteredShows = shows.filter((show) => {
+    if (filterVerified === "verified") return show.verified;
+    if (filterVerified === "unverified") return !show.verified;
+    return true;
+  });
 
   const openCreateModal = () => {
     setEditingShow(null);
@@ -231,28 +312,52 @@ export default function ManageShowsPage() {
         </Button>
       </div>
 
-      {/* Bulk Import */}
-      <Card>
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="font-semibold text-gray-900 dark:text-white">
-              Bulk Import
-            </h2>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Import verified shows: Collect-A-Con, The National, Pokemon events, conventions
-            </p>
-            {seedResult && (
-              <p className="mt-2 text-sm text-green-600 dark:text-green-400">
-                Created {seedResult.created}, skipped {seedResult.skipped} existing
+      {/* Scrape & Import Controls */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card>
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="font-semibold text-gray-900 dark:text-white">
+                Auto-Scrape Shows
+              </h2>
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                Fetch from Sports Collectors Digest, Trading Card Con
               </p>
-            )}
+              {scrapeResult && (
+                <p className="mt-2 text-sm text-green-600 dark:text-green-400">
+                  Found {scrapeResult.showsFound}, created {scrapeResult.showsCreated}, skipped {scrapeResult.showsSkipped}
+                </p>
+              )}
+            </div>
+            <Button variant="primary" onClick={scrapeShows} loading={scraping}>
+              <Radar className="h-4 w-4" />
+              Scrape Now
+            </Button>
           </div>
-          <Button variant="outline" onClick={bulkSeedShows} loading={seeding}>
-            <Download className="h-4 w-4" />
-            Import Shows
-          </Button>
-        </div>
-      </Card>
+        </Card>
+
+        <Card>
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="font-semibold text-gray-900 dark:text-white">
+                Seed Data
+              </h2>
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                Import pre-verified shows from seed data
+              </p>
+              {seedResult && (
+                <p className="mt-2 text-sm text-green-600 dark:text-green-400">
+                  Created {seedResult.created}, skipped {seedResult.skipped}
+                </p>
+              )}
+            </div>
+            <Button variant="outline" onClick={bulkSeedShows} loading={seeding}>
+              <Download className="h-4 w-4" />
+              Import
+            </Button>
+          </div>
+        </Card>
+      </div>
 
       {error && (
         <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600 dark:bg-red-900/20 dark:text-red-400">
@@ -262,10 +367,22 @@ export default function ManageShowsPage() {
 
       {/* Shows List */}
       <Card>
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
           <h2 className="font-semibold text-gray-900 dark:text-white">
-            All Shows ({shows.length})
+            Shows ({filteredShows.length} of {shows.length})
           </h2>
+          <div className="flex items-center gap-2">
+            <Filter className="h-4 w-4 text-gray-400" />
+            <select
+              value={filterVerified}
+              onChange={(e) => setFilterVerified(e.target.value as "all" | "verified" | "unverified")}
+              className="rounded-md border border-gray-300 px-2 py-1 text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+            >
+              <option value="all">All Shows</option>
+              <option value="unverified">Needs Review</option>
+              <option value="verified">Verified</option>
+            </select>
+          </div>
         </div>
 
         {loading ? (
@@ -284,13 +401,13 @@ export default function ManageShowsPage() {
                   <th className="pb-3 text-left font-medium text-gray-500">Show</th>
                   <th className="pb-3 text-left font-medium text-gray-500">Location</th>
                   <th className="pb-3 text-left font-medium text-gray-500">Dates</th>
-                  <th className="pb-3 text-left font-medium text-gray-500">Type</th>
-                  <th className="pb-3 text-center font-medium text-gray-500">Geocoded</th>
+                  <th className="pb-3 text-left font-medium text-gray-500">Source</th>
+                  <th className="pb-3 text-center font-medium text-gray-500">Status</th>
                   <th className="pb-3 text-right font-medium text-gray-500">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {shows.map((show) => (
+                {filteredShows.map((show) => (
                   <tr key={show.id} className="border-b border-gray-100 dark:border-gray-800">
                     <td className="py-3">
                       <div className="flex items-center gap-2">
@@ -319,19 +436,44 @@ export default function ManageShowsPage() {
                       {format(new Date(show.startDate), "MMM d")} - {format(new Date(show.endDate), "MMM d, yyyy")}
                     </td>
                     <td className="py-3">
-                      <Badge variant="default" size="sm">
-                        {ShowTypeLabels[show.showType] || show.showType}
-                      </Badge>
+                      <div className="flex flex-col gap-1">
+                        <Badge variant="info" size="sm">
+                          {ShowSourceLabels[show.source] || show.source}
+                        </Badge>
+                        <Badge variant="default" size="sm">
+                          {ShowTypeLabels[show.showType] || show.showType}
+                        </Badge>
+                      </div>
                     </td>
                     <td className="py-3 text-center">
-                      {show.lat && show.lng ? (
-                        <MapPin className="mx-auto h-4 w-4 text-green-500" />
-                      ) : (
-                        <span className="text-gray-400">-</span>
-                      )}
+                      <div className="flex flex-col items-center gap-1">
+                        {show.verified ? (
+                          <span title="Verified">
+                            <CheckCircle className="h-4 w-4 text-green-500" />
+                          </span>
+                        ) : (
+                          <span title="Needs review">
+                            <Clock className="h-4 w-4 text-amber-500" />
+                          </span>
+                        )}
+                        {show.lat && show.lng ? (
+                          <span title="Geocoded">
+                            <MapPin className="h-3 w-3 text-blue-400" />
+                          </span>
+                        ) : null}
+                      </div>
                     </td>
                     <td className="py-3">
                       <div className="flex justify-end gap-1">
+                        {!show.verified && (
+                          <button
+                            onClick={() => verifyShow(show.id)}
+                            className="rounded p-1.5 text-amber-500 hover:bg-amber-100 hover:text-amber-600 dark:hover:bg-amber-900/20"
+                            title="Verify show"
+                          >
+                            <Check className="h-4 w-4" />
+                          </button>
+                        )}
                         <button
                           onClick={() => openEditModal(show)}
                           className="rounded p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700"

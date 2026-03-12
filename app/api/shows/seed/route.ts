@@ -979,6 +979,8 @@ export async function POST() {
             ticketUrl: show.ticketUrl,
             description: show.description,
             featured: show.featured ?? false,
+            source: "SEED",
+            verified: true,
           },
         });
         created++;
